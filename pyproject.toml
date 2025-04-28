@@ -1,5 +1,5 @@
 [project]
-name = "simload"
+name = "simona-markov-load"
 version = "0.1.0"
 description = "Synthetic household load profiles for Simona"
 authors = [
