@@ -1,0 +1,23 @@
+# Virtual Environments
+.venv/
+.mypy_cache/
+__pycache__/
+
+# IDE / Editor
+.idea/
+*.iml
+.vscode/
+
+# Data
+data/raw/
+data/processed/
+
+# Betriebssystem
+Thumbs.db
+.DS_Store
+
+# Logs, Coverage, Reports
+*.log
+htmlcov/
+.pytest_cache/
+coverage.xml
