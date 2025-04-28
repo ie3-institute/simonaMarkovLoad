@@ -39,6 +39,8 @@ poetry install
 # Install and activate the pre-commit hooks
 poetry run setup
 ```
+#### Alternative
+Check the format by hand `poetry run pre-commit run --all-files`
 
 ## ▶️ Usage
 

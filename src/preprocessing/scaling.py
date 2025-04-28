@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -15,4 +16,19 @@ def normalize_power(
     denom = (p_max - p_min) or eps  # schützt vor ZeroDivisionError
 
     df[col] = (df[col] - p_min) / denom
+    return df
+
+
+def discretize_power(
+    df: pd.DataFrame,
+    *,
+    col: str = "power",
+    state_col: str = "state",
+) -> pd.DataFrame:
+    taus = np.array([(k / 10) ** 2 for k in range(1, 10)], dtype=float)
+
+    values = df[col].to_numpy()
+    states = np.searchsorted(taus, values, side="right")
+
+    df[state_col] = states
     return df
