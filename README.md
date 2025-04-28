@@ -52,6 +52,5 @@ Check the format by hand `poetry run pre-commit run --all-files`
 
 If you have any questions, feel free to reach out to:
 
-**Philipp Schmelter**  
-✉️ <philipp.schmelter@tu-dortmund.de>
+- **Philipp Schmelter** ✉️ <philipp.schmelter@tu-dortmund.de>
 ---
