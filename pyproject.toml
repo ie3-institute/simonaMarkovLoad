@@ -1,5 +1,5 @@
 [project]
-name = "simonamarkovload"
+name = "simona-markov-load"
 version = "0.1.0"
 description = "Synthetic household load profiles for Simona"
 authors = [
@@ -21,16 +21,14 @@ dependencies = [
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-packages = [
-  { include = "simonaMarkovLoad" },
-  { include = "scripts" }
-]
-
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
 isort = "^6.0.1"
 ruff = "^0.11.7"
 pre-commit = "^4.2.0"
+
+[[tool.poetry.packages]]
+include = "scripts"
 
 [tool.poetry.scripts]
 setup = "scripts.setup_env:main"

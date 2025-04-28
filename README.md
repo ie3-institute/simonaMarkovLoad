@@ -18,9 +18,38 @@
 - Export synthetic profiles as CSV or integrate directly into Simona API
 
 ## 🚀 Installation
+### Prerequisites
+- **Python** ≥ 3.10
+- **Poetry** installed
+  - `pip install poetry`  
+  - or, preferably, via [pipx](https://pipxproject.github.io/):
+   `pipx install poetry`
 
-- FOLLOWS
+### Clone the repository
+```bash
+git clone https://github.com/ie3-institute/simonaMarkovLoad
+cd simonamarkovload
+```
+
+### Install dependencies & enable hooks
+```bash
+# Install all dependencies (including dev-dependencies)
+poetry install
+
+# Install and activate the pre-commit hooks
+poetry run setup
+```
 
 ## ▶️ Usage
 
 ## 📄 License
+
+---
+
+## 📬 Questions?
+
+If you have any questions, feel free to reach out to:
+
+**Philipp Schmelter**  
+✉️ <philipp.schmelter@tu-dortmund.de>
+---
