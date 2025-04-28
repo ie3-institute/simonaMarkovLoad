@@ -29,6 +29,6 @@ jobs:
           poetry run setup
 
       - name: Run Pre-commit checks
-        uses: pre-commit/action@v3
+        uses: pre-commit/action@v3.0.1
         with:
           extra_args: --all-files
