@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 
-from src.preprocessing.loader import load_raw_timeseries
-from src.preprocessing.scaling import discretize_power, normalize_power
+from src.preprocessing.loader import load_timeseries
 
 
 def plot_state_distribution(df):
@@ -18,13 +17,13 @@ def plot_state_distribution(df):
 
 
 def main():
-    df = load_raw_timeseries()
+    df = load_timeseries()
     print(df)
-    df = normalize_power(df)
-    print(df)
-    df = discretize_power(df)
-    print(df)
-    plot_state_distribution(df)
+    df_norm = load_timeseries(normalize=True)
+    print(df_norm)
+    df_disc = load_timeseries(normalize=True, discretize=True)
+    print(df_disc)
+    plot_state_distribution(df_disc)
 
 
 if __name__ == "__main__":

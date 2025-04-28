@@ -13,7 +13,7 @@ def normalize_power(
 
     p_min = df[col].min()
     p_max = df[col].max()
-    denom = (p_max - p_min) or eps  # schützt vor ZeroDivisionError
+    denom = (p_max - p_min) or eps  # anti zero division
 
     df[col] = (df[col] - p_min) / denom
     return df
