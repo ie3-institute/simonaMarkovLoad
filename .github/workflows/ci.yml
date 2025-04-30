@@ -34,4 +34,4 @@ jobs:
           extra_args: --all-files --show-diff-on-failure
 
       - name: Run tests
-        run: poetry run pytest --maxfail=1 --disable-warnings -q
+        run: poetry run pytest --maxfail=1 --disable-warnings -v
