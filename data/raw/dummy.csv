@@ -1,2 +1,38 @@
-ts,value
-2020-10-05 00:00:00+00:00,1581.1992426338002
+id,fa90c793-cba7-4cb7-baad-3b0d8358fa87
+measures_from,2018-07-08
+measures_to,2024-08-27
+measurement_category,Verbrauch
+measurement_unit,kWh
+measurement_type,Wirkarbeit
+measurement_value_type,Zaehlerstand
+measurement_frequency,15min
+location_id,dce65d19-9bbe-4380-bf98-8f20b1e9bdce
+category,Privat
+usage,Haushalt
+usage_detail,
+country,Deutschland
+federal_state,Rheinland-Pfalz
+city,Fischbach bei Dahn
+post_code,66996
+area,160
+construction_year,
+ ,
+ ,
+ ,
+Zeitstempel,Messwert
+2018-08-23 19:00:00,7.8084862345
+2018-08-23 19:15:00,8.3123934554
+2018-08-23 19:30:00,8.6139923509
+2018-08-23 19:45:00,8.781093333500001
+2018-08-23 20:00:00,8.8507776576
+2018-08-23 20:15:00,8.9241642592
+2018-08-23 20:30:00,8.9862962284
+2018-08-23 20:45:00,9.0488499792
+2018-08-23 21:00:00,9.0936536397
+2018-08-23 21:15:00,9.1314623328
+2018-08-23 21:30:00,9.1637393551
+2018-08-23 21:45:00,9.1882020343
+2018-08-23 22:00:00,9.2013172492
+2018-08-23 22:15:00,9.2376013874
+2018-08-23 22:30:00,9.250667267
+2018-08-23 22:45:00,9.2874485848

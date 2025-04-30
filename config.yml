@@ -1,0 +1,5 @@
+input:
+  skiprows: 21
+  timestamp_col: "Zeitstempel"
+  value_col: "Messwert"
+  factor: 4         # 15-min → kW depends on sampling
