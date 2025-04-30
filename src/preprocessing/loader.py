@@ -3,6 +3,8 @@ from typing import List
 
 import pandas as pd
 
+from src.config import CONFIG
+
 from .scaling import discretize_power, normalize_power
 
 RAW_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
@@ -17,6 +19,7 @@ def load_timeseries(
     discretize: bool = False,
     eps: float = 1e-12,
 ) -> pd.DataFrame:
+    cfg_in = CONFIG["input"]
 
     # Collect all .csv files under data/raw
     csv_files: List[Path] = sorted(RAW_DATA_DIR.glob("*.csv"))
@@ -29,13 +32,18 @@ def load_timeseries(
         df = pd.read_csv(
             path,
             skiprows=21,
-            usecols=["Zeitstempel", "Messwert"],
-            dtype={"Messwert": value_dtype},
-            parse_dates=["Zeitstempel"],
+            usecols=[cfg_in["timestamp_col"], cfg_in["value_col"]],
+            dtype={cfg_in["value_col"]: value_dtype},
+            parse_dates=[cfg_in["timestamp_col"]],
         )
-        df = df.rename(columns={"Zeitstempel": "timestamp", "Messwert": "cum_kwh"})
+        df = df.rename(
+            columns={
+                cfg_in["timestamp_col"]: "timestamp",
+                cfg_in["value_col"]: "cum_kwh",
+            }
+        )
 
-        df["power"] = df["cum_kwh"].diff() * 4
+        df["power"] = df["cum_kwh"].diff() * cfg_in["factor"]
 
         df = df.dropna(subset=["power"]).drop(columns="cum_kwh").reset_index(drop=True)
 
