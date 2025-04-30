@@ -28,11 +28,16 @@ def load_timeseries(
     for path in csv_files:
         df = pd.read_csv(
             path,
-            usecols=["ts", "value"],
-            dtype={"value": value_dtype},
-            parse_dates=["ts"],
+            skiprows=21,
+            usecols=["Zeitstempel", "Messwert"],
+            dtype={"Messwert": value_dtype},
+            parse_dates=["Zeitstempel"],
         )
-        df = df.rename(columns={"ts": "timestamp", "value": "power"})
+        df = df.rename(columns={"Zeitstempel": "timestamp", "Messwert": "cum_kwh"})
+
+        df["power"] = df["cum_kwh"].diff() * 4
+
+        df = df.dropna(subset=["power"]).drop(columns="cum_kwh").reset_index(drop=True)
 
         if normalize:
             df = normalize_power(df, col="power", eps=eps)
