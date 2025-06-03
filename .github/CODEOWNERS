@@ -1,10 +1,10 @@
 # Reviewers for Dependabot PRs (Dependencies)
-pyproject.toml  @sebastian-peter
-poetry.lock  @sebastian-peter
+pyproject.toml  @sebastian-peter @PhilippSchmelter
+poetry.lock  @sebastian-peter @PhilippSchmelter
 
 # Sourcecode Reviewers
-/src @sebastian-peter
-/tests @sebastian-peter
+/src @sebastian-peter @PhilippSchmelter
+/tests @sebastian-peter @PhilippSchmelter
 
 # Reviewers for CI/CD related PRs
 .github/workflows/  @sebastian-peter  @PhilippSchmelter
