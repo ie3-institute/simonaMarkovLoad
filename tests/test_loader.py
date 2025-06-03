@@ -20,7 +20,7 @@ def _create_sample_csv(path: Path) -> None:
 
 
 def test_load_timeseries_full(tmp_path, monkeypatch):
-    """Loader must return timestamp, power, scaled, state, bucket."""
+    """Loader must return timestamp, power state, bucket."""
     raw_dir = tmp_path / "data" / "raw"
     raw_dir.mkdir(parents=True)
     csv_file = raw_dir / "sample.csv"
@@ -38,8 +38,8 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     df = load_timeseries(normalize=True, discretize=True)
 
     # two rows (first diff removed) & five columns
-    assert df.shape == (2, 5)
-    assert list(df.columns) == ["timestamp", "power", "scaled", "state", "bucket"]
+    assert df.shape == (2, 4)
+    assert list(df.columns) == ["timestamp", "power", "state", "bucket"]
 
     # timestamps
     expected_ts = pd.Series(
@@ -48,18 +48,15 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     )
     pd.testing.assert_series_equal(df["timestamp"], expected_ts, check_names=False)
 
-    # power column ( diff * 4 )
-    expected_power = pd.Series([2.0, 2.0], name="power", dtype="float32")
+    # normalized power column: both values become 0.0
+    expected_power = pd.Series([0.0, 0.0], name="power", dtype="float32")
     pd.testing.assert_series_equal(df["power"], expected_power)
 
-    # scaled column – both values identical → expect 0 with the given eps logic
-    expected_scaled = pd.Series([0.0, 0.0], name="scaled", dtype="float32")
-    pd.testing.assert_series_equal(df["scaled"], expected_scaled)
-
-    # state column – with scaled=0, discretiser puts them in bin 0
-    expected_state = pd.Series([0, 0], name="state", dtype="uint8")
+    # state column: both values land in bin 0
+    expected_state = pd.Series([0, 0], name="state", dtype="int64")
     pd.testing.assert_series_equal(df["state"], expected_state)
 
+    # bucket IDs
     expected_bucket = pd.Series(
         [bucket_id(ts) for ts in expected_ts], name="bucket", dtype="uint16"
     )
