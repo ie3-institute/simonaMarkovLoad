@@ -1,7 +1,3 @@
-"""Raw 10×10 transition count matrices for every bucket."""
-
-from __future__ import annotations
-
 import numpy as np
 import pandas as pd
 
