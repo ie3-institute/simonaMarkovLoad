@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `CODEOWNERS` file and dependabot automation [#7](https://github.com/ie3-institute/simonaMarkovLoad/issues/7)
+- Added full Markov-model pipeline [#10](https://github.com/ie3-institute/simonaMarkovLoad/issues/10)
 
 ### Changed
 - Compute instantaneous kW from cumulative kWh via 15-minute differencing [#1](https://github.com/ie3-institute/simonaMarkovLoad/issues/1)

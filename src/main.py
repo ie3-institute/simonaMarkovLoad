@@ -1,30 +1,31 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
+from src.markov.transition_counts import build_transition_counts
+from src.markov.transitions import build_transition_matrices
 from src.preprocessing.loader import load_timeseries
 
-
-def plot_state_distribution(df):
-
-    counts = df["state"].value_counts().sort_index()
-
-    plt.figure()
-    plt.bar(counts.index, counts.values)
-    plt.xlabel("State")
-    plt.ylabel("Anzahl Einträge")
-    plt.title("Verteilung der Einträge nach State")
-    plt.xticks(counts.index)
-    plt.show()
+df = load_timeseries(normalize=True, discretize=True)
 
 
-def main():
-    df = load_timeseries()
-    print(df)
-    df_norm = load_timeseries(normalize=True)
-    print(df_norm)
-    df_disc = load_timeseries(normalize=True, discretize=True)
-    print(df_disc)
-    plot_state_distribution(df_disc)
+counts = build_transition_counts(df)
+probs = build_transition_matrices(df, alpha=1.0)
+
+print("counts shape :", counts.shape)
+print("probs  shape :", probs.shape)
 
 
-if __name__ == "__main__":
-    main()
+active_buckets = np.where(counts.sum(axis=(1, 2)) > 0)[0]
+bucket = int(active_buckets[0]) if active_buckets.size else 0
+print(f"\nUsing bucket {bucket}")
+
+
+print("row sums :", probs[bucket].sum(axis=1))
+
+plt.imshow(probs[bucket], aspect="auto")
+plt.title(f"Bucket {bucket} – transition probabilities")
+plt.xlabel("state t+1")
+plt.ylabel("state t")
+plt.colorbar()
+plt.tight_layout()
+plt.show()
