@@ -14,7 +14,6 @@
 - Laplace-smoothed Markov transition matrix per bucket
 - GMM fitting per bucket and state with automatic component selection via BIC
 - Parallel training with `joblib`
-- CLI interface built with Typer/Hydra
 - Export synthetic profiles as CSV or integrate directly into Simona API
 
 ## 🚀 Installation
