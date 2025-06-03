@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 
-from . import N_STATES
+from src.config import CONFIG
+
 from .buckets import NUM_BUCKETS
+
+N_STATES = int(CONFIG["model"]["n_states"])
 
 
 def build_transition_counts(
