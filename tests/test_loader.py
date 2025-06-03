@@ -4,53 +4,66 @@ import pandas as pd
 import pytest
 
 import src.preprocessing.loader as loader_module
-
-# Import the module under test
+from src.markov.buckets import bucket_id
 from src.preprocessing.loader import load_timeseries
 
 
-def create_sample_csv(path: Path):
-    # Write 21 dummy metadata lines
-    with open(path, "w", encoding="utf-8") as f:
+def _create_sample_csv(path: Path) -> None:
+    """Write 3 kWh readings; first diff will be NaN and dropped."""
+    with path.open("w", encoding="utf-8") as f:
         for _ in range(21):
             f.write("metadata line\n")
-        # Header and sample data
         f.write("Zeitstempel,Messwert\n")
         f.write("2021-01-01 00:00:00,0.0\n")
         f.write("2021-01-01 00:15:00,0.5\n")
         f.write("2021-01-01 00:30:00,1.0\n")
 
 
-def test_load_timeseries(tmp_path, monkeypatch):
-    # Setup a temporary data/raw directory
+def test_load_timeseries_full(tmp_path, monkeypatch):
+    """Loader must return timestamp, power, scaled, state, bucket."""
     raw_dir = tmp_path / "data" / "raw"
     raw_dir.mkdir(parents=True)
     csv_file = raw_dir / "sample.csv"
-    create_sample_csv(csv_file)
+    _create_sample_csv(csv_file)
 
-    # Monkeypatch the RAW_DATA_DIR in the loader module
     monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
-
-    # Execute loader (skip normalize and discretize)
-    df = load_timeseries()
-
-    # Expect two rows (first diff yields NaN and is dropped)
-    assert df.shape == (2, 2)
-    # Columns should be timestamp and power
-    assert list(df.columns) == ["timestamp", "power"]
-
-    # Check timestamps are parsed correctly
-    expected_timestamps = pd.Series(
-        pd.to_datetime(["2021-01-01 00:15:00", "2021-01-01 00:30:00"]), name="timestamp"
-    )
-    pd.testing.assert_series_equal(
-        df["timestamp"], expected_timestamps, check_names=False
+    loader_module.CONFIG["input"].update(
+        {
+            "timestamp_col": "Zeitstempel",
+            "value_col": "Messwert",
+            "factor": 4.0,
+        }
     )
 
-    # Check power calculation: diff * 4
-    # Values: (0.5 - 0.0)*4 = 2.0, (1.0 - 0.5)*4 = 2.0
+    df = load_timeseries(normalize=True, discretize=True)
+
+    # two rows (first diff removed) & five columns
+    assert df.shape == (2, 5)
+    assert list(df.columns) == ["timestamp", "power", "scaled", "state", "bucket"]
+
+    # timestamps
+    expected_ts = pd.Series(
+        pd.to_datetime(["2021-01-01 00:15:00", "2021-01-01 00:30:00"]),
+        name="timestamp",
+    )
+    pd.testing.assert_series_equal(df["timestamp"], expected_ts, check_names=False)
+
+    # power column ( diff * 4 )
     expected_power = pd.Series([2.0, 2.0], name="power", dtype="float32")
     pd.testing.assert_series_equal(df["power"], expected_power)
+
+    # scaled column – both values identical → expect 0 with the given eps logic
+    expected_scaled = pd.Series([0.0, 0.0], name="scaled", dtype="float32")
+    pd.testing.assert_series_equal(df["scaled"], expected_scaled)
+
+    # state column – with scaled=0, discretiser puts them in bin 0
+    expected_state = pd.Series([0, 0], name="state", dtype="uint8")
+    pd.testing.assert_series_equal(df["state"], expected_state)
+
+    expected_bucket = pd.Series(
+        [bucket_id(ts) for ts in expected_ts], name="bucket", dtype="uint16"
+    )
+    pd.testing.assert_series_equal(df["bucket"], expected_bucket)
 
 
 if __name__ == "__main__":

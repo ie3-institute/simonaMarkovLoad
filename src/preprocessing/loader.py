@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.config import CONFIG
 
+from ..markov.buckets import assign_buckets
 from .scaling import discretize_power, normalize_power
 
 RAW_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
@@ -52,6 +53,8 @@ def load_timeseries(
 
         if discretize:
             df = discretize_power(df, col="power", state_col="state")
+
+        df = assign_buckets(df, inplace=True)
 
         frames.append(df)
 
