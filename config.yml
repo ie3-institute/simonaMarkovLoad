@@ -3,3 +3,7 @@ input:
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
   factor: 4         # 15-min → kW depends on sampling
+
+model:
+  n_states: 10
+  laplace_alpha: 1.0
