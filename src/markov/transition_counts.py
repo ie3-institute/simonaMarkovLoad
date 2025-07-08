@@ -15,11 +15,6 @@ def build_transition_counts(
     bucket_col: str = "bucket",
     dtype=np.uint32,
 ) -> np.ndarray:
-    """
-    Absolute transition counts:
-        C[b, i, j] = # of times state_t=i  → state_{t+1}=j in bucket b
-    Shape = (2 304, 10, 10).
-    """
     df = df.sort_values("timestamp")
 
     s_t = df[state_col].to_numpy(dtype=int)[:-1]
