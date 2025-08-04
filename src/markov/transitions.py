@@ -9,7 +9,6 @@ def build_transition_matrices(df: pd.DataFrame, *, dtype=np.float32) -> np.ndarr
     row_sum = counts.sum(axis=2, keepdims=True)
     empty = row_sum == 0
     if np.any(empty):
-        n_states = counts.shape[2]
         idx_b, idx_i, _ = np.where(empty)
         counts[idx_b, idx_i, :] = 0
         counts[idx_b, idx_i, idx_i] = 1
