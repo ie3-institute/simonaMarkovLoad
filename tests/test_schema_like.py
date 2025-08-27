@@ -16,7 +16,9 @@ def test_thresholds_right_formula(small_df, tiny_models):
 
     assert np.allclose(thresholds, expected_thresholds, atol=1e-12)
 
-    assert thresholds == pytest.approx([0.01, 0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81], abs=1e-12)
+    assert thresholds == pytest.approx(
+        [0.01, 0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81], abs=1e-12
+    )
     assert len(thresholds) == 9
 
 

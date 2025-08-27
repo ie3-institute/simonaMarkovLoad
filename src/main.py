@@ -24,13 +24,17 @@ def _detect_value_col(df: pd.DataFrame) -> str:
     raise KeyError("numeric load column missing")
 
 
-def simulate_step(probs: np.ndarray, gmms, bucket: int, state: int, rng: np.random.Generator) -> tuple[int, float]:
+def simulate_step(
+    probs: np.ndarray, gmms, bucket: int, state: int, rng: np.random.Generator
+) -> tuple[int, float]:
     """Robust simulation step that handles missing GMMs."""
     # Get transition probabilities for current bucket and state
     transitions = probs[bucket, state, :].copy()
 
     # Create mask for states that have GMMs in this bucket
-    valid_states = np.array([gmms[bucket][s] is not None for s in range(len(transitions))])
+    valid_states = np.array(
+        [gmms[bucket][s] is not None for s in range(len(transitions))]
+    )
 
     # If no states have GMMs, stay in current state and return default value
     if not np.any(valid_states):
