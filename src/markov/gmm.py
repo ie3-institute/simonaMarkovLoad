@@ -132,4 +132,6 @@ def sample_value(
     weights, means, vars_ = gmm
     rng = _rng if rng is None else rng
     comp = rng.choice(len(weights), p=weights)
-    return float(rng.normal(means[comp], math.sqrt(vars_[comp])))
+    # Clamp to [0, 1] since values are normalized
+    val = float(rng.normal(means[comp], math.sqrt(vars_[comp])))
+    return float(min(1.0, max(0.0, val)))

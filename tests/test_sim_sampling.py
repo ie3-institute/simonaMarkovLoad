@@ -1,14 +1,8 @@
 import numpy as np
 import pytest
 
+from src.main import simulate_step
 from src.markov.buckets import bucket_id
-from src.markov.gmm import sample_value
-
-
-def simulate_step(p, gmms, bucket, state, rng):
-    next_state = rng.choice(p.shape[1], p=p[bucket, state, :])
-    sampled_value = sample_value(gmms, bucket, next_state, rng=rng)
-    return next_state, sampled_value
 
 
 def test_simulate_step_deterministic(tiny_models, rng):

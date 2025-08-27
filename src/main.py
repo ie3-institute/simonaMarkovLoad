@@ -24,6 +24,37 @@ def _detect_value_col(df: pd.DataFrame) -> str:
     raise KeyError("numeric load column missing")
 
 
+def simulate_step(probs: np.ndarray, gmms, bucket: int, state: int, rng: np.random.Generator) -> tuple[int, float]:
+    """Robust simulation step that handles missing GMMs."""
+    # Get transition probabilities for current bucket and state
+    transitions = probs[bucket, state, :].copy()
+
+    # Create mask for states that have GMMs in this bucket
+    valid_states = np.array([gmms[bucket][s] is not None for s in range(len(transitions))])
+
+    # If no states have GMMs, stay in current state and return default value
+    if not np.any(valid_states):
+        return state, 0.0
+
+    # Mask out invalid states (set their probabilities to 0)
+    transitions[~valid_states] = 0.0
+
+    # Renormalize probabilities
+    if transitions.sum() > 0:
+        transitions = transitions / transitions.sum()
+    else:
+        # If all probabilities were 0 after masking, stay in current state
+        return state, 0.0
+
+    # Sample next state from valid states only
+    next_state = rng.choice(len(transitions), p=transitions)
+
+    # Sample value from GMM (guaranteed to exist now)
+    sampled_value = sample_value(gmms, bucket, next_state, rng=rng)
+
+    return next_state, sampled_value
+
+
 def _simulate_series(
     probs: np.ndarray,
     gmms,
@@ -40,9 +71,9 @@ def _simulate_series(
     s = start_state
     for i, t in enumerate(ts):
         b = bucket_id(t)
-        s = rng.choice(probs.shape[1], p=probs[b, s])
+        s, x = simulate_step(probs, gmms, b, s, rng)
         states[i] = s
-        xs[i] = sample_value(gmms, b, s, rng=rng)
+        xs[i] = x
 
     return pd.DataFrame({"timestamp": ts, "state": states, "x_sim": xs})
 

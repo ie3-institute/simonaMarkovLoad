@@ -1,5 +1,6 @@
 import json
 
+import numpy as np
 import pytest
 
 from src.export import build_psdm_payload_from_models
@@ -13,9 +14,9 @@ def test_thresholds_right_formula(small_df, tiny_models):
 
     expected_thresholds = [(k / 10) ** 2 for k in range(1, 10)]
 
-    assert thresholds == expected_thresholds
+    assert np.allclose(thresholds, expected_thresholds, atol=1e-12)
 
-    assert thresholds == [0.01, 0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81]
+    assert thresholds == pytest.approx([0.01, 0.04, 0.09, 0.16, 0.25, 0.36, 0.49, 0.64, 0.81], abs=1e-12)
     assert len(thresholds) == 9
 
 

@@ -87,7 +87,8 @@ def build_psdm_payload_from_models(
         gmm_params = {
             "max_components": 3,
             "min_samples_per_state": 30,
-            "covariance_type": "diag",
+            # Match the training configuration in src/markov/gmm.py
+            "covariance_type": "spherical",
             "random_seed": 42,
         }
 
