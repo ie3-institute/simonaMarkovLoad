@@ -141,7 +141,7 @@ def test_gmm_empty_state():
     gmms = fit_gmms(
         df,
         value_col="value",
-        min_samples=1,
+        min_samples=10,
         k_candidates=(1,),
         random_state=123,
         verbose=0,
