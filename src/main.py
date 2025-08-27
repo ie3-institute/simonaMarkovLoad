@@ -2,7 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize
+from pathlib import Path
 
+from src.config import CONFIG
+from src.export import export_psdm_json
 from src.markov.buckets import assign_buckets, bucket_id
 from src.markov.gmm import fit_gmms, sample_value
 from src.markov.transition_counts import build_transition_counts
@@ -111,12 +114,36 @@ def main() -> None:
 
     _plot_first_25_buckets(counts, probs)
 
-    gmms = fit_gmms(
-        df,
-        value_col=val_col,
-        verbose=1,
-        heartbeat_seconds=60,
-    )
+    gm_kwargs = {
+        "value_col": val_col,
+        "verbose": 1,
+        "heartbeat_seconds": 60,
+    }
+    
+    gmms = fit_gmms(df, **gm_kwargs)
+
+
+    meta = {"records": len(df)}
+    if "ts" in df.columns:
+        meta["time_range"] = {
+            "start": str(df["ts"].min()),
+            "end": str(df["ts"].max())
+        }
+    if "source" in CONFIG.get("data", {}):
+        meta["source"] = CONFIG["data"]["source"]
+    
+
+    try:
+        out_path = Path(CONFIG.get("output", {}).get("psdm_json", "out/psdm_model.json"))
+        pretty = bool(CONFIG.get("output", {}).get("pretty_json", False))
+        
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        export_psdm_json(out_path, df, probs, gmms, meta=meta, gmm_params=gm_kwargs, pretty=pretty)
+        print(f"[export] PSDM JSON written to {out_path}")
+    except Exception as e:
+        print(f"[export] FAILED to write PSDM JSON: {e}")
 
     periods = SIM_DAYS * PER_DAY
     sim = _simulate_series(
