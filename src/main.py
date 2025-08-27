@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize
 
+from src.config import CONFIG
+from src.export import export_psdm_json
 from src.markov.buckets import assign_buckets, bucket_id
 from src.markov.gmm import fit_gmms, sample_value
 from src.markov.transition_counts import build_transition_counts
@@ -18,6 +22,35 @@ def _detect_value_col(df: pd.DataFrame) -> str:
         if c in df.columns and np.issubdtype(df[c].dtype, np.number):
             return c
     raise KeyError("numeric load column missing")
+
+
+def simulate_step(
+    probs: np.ndarray, gmms, bucket: int, state: int, rng: np.random.Generator
+) -> tuple[int, float]:
+    """Robust simulation step that handles missing GMMs."""
+
+    transitions = probs[bucket, state, :].copy()
+
+    valid_states = np.array(
+        [gmms[bucket][s] is not None for s in range(len(transitions))]
+    )
+
+    if not np.any(valid_states):
+        return state, 0.0
+
+    transitions[~valid_states] = 0.0
+
+    if transitions.sum() > 0:
+        transitions = transitions / transitions.sum()
+    else:
+
+        return state, 0.0
+
+    next_state = rng.choice(len(transitions), p=transitions)
+
+    sampled_value = sample_value(gmms, bucket, next_state, rng=rng)
+
+    return next_state, sampled_value
 
 
 def _simulate_series(
@@ -36,9 +69,9 @@ def _simulate_series(
     s = start_state
     for i, t in enumerate(ts):
         b = bucket_id(t)
-        s = rng.choice(probs.shape[1], p=probs[b, s])
+        s, x = simulate_step(probs, gmms, b, s, rng)
         states[i] = s
-        xs[i] = sample_value(gmms, b, s, rng=rng)
+        xs[i] = x
 
     return pd.DataFrame({"timestamp": ts, "state": states, "x_sim": xs})
 
@@ -111,12 +144,34 @@ def main() -> None:
 
     _plot_first_25_buckets(counts, probs)
 
-    gmms = fit_gmms(
-        df,
-        value_col=val_col,
-        verbose=1,
-        heartbeat_seconds=60,
-    )
+    gm_kwargs = {
+        "value_col": val_col,
+        "verbose": 1,
+        "heartbeat_seconds": 60,
+    }
+
+    gmms = fit_gmms(df, **gm_kwargs)
+
+    meta = {"records": len(df)}
+    if "ts" in df.columns:
+        meta["time_range"] = {"start": str(df["ts"].min()), "end": str(df["ts"].max())}
+    if "source" in CONFIG.get("data", {}):
+        meta["source"] = CONFIG["data"]["source"]
+
+    try:
+        out_path = Path(
+            CONFIG.get("output", {}).get("psdm_json", "out/psdm_model.json")
+        )
+        pretty = bool(CONFIG.get("output", {}).get("pretty_json", False))
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        export_psdm_json(
+            out_path, df, probs, gmms, meta=meta, gmm_params=gm_kwargs, pretty=pretty
+        )
+        print(f"[export] PSDM JSON written to {out_path}")
+    except Exception as e:
+        print(f"[export] FAILED to write PSDM JSON: {e}")
 
     periods = SIM_DAYS * PER_DAY
     sim = _simulate_series(

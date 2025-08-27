@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 
@@ -23,12 +22,12 @@ def load_timeseries(
     cfg_in = CONFIG["input"]
 
     # Collect all .csv files under data/raw
-    csv_files: List[Path] = sorted(RAW_DATA_DIR.glob("*.csv"))
+    csv_files: list[Path] = sorted(RAW_DATA_DIR.glob("*.csv"))
     if not csv_files:
         raise FileNotFoundError(f"No CSV files found in {RAW_DATA_DIR}.")
 
     # Read columns (ts, value) from each file
-    frames: List[pd.DataFrame] = []
+    frames: list[pd.DataFrame] = []
     for path in csv_files:
         df = pd.read_csv(
             path,

@@ -1,5 +1,4 @@
 import math
-from typing import List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -16,8 +15,8 @@ from .transition_counts import N_STATES
 
 __all__ = ["GaussianBucketModels", "fit_gmms", "sample_value"]
 
-GmmTuple = Tuple[np.ndarray, np.ndarray, np.ndarray]
-GaussianBucketModels = List[List[Optional[GmmTuple]]]
+GmmTuple = tuple[np.ndarray, np.ndarray, np.ndarray]
+GaussianBucketModels = list[list[GmmTuple | None]]
 
 _rng = np.random.default_rng()
 
@@ -26,9 +25,9 @@ def _fit_single(
     x: np.ndarray,
     *,
     min_samples: int = 30,
-    k_candidates: Tuple[int, ...] = (1, 2, 3),
+    k_candidates: tuple[int, ...] = (1, 2, 3),
     random_state: int | None = None,
-) -> Optional[GmmTuple]:
+) -> GmmTuple | None:
     if x.size == 0:
         return None
     if len(x) < min_samples:
@@ -66,7 +65,7 @@ def fit_gmms(
     bucket_col: str = "bucket",
     state_col: str = "state",
     min_samples: int = 5,
-    k_candidates: Tuple[int, ...] = (1, 2, 3),
+    k_candidates: tuple[int, ...] = (1, 2, 3),
     n_jobs: int = -1,
     random_state: int | None = None,
     verbose: int = 0,
@@ -133,4 +132,6 @@ def sample_value(
     weights, means, vars_ = gmm
     rng = _rng if rng is None else rng
     comp = rng.choice(len(weights), p=weights)
-    return float(rng.normal(means[comp], math.sqrt(vars_[comp])))
+    # Clamp to [0, 1] since values are normalized
+    val = float(rng.normal(means[comp], math.sqrt(vars_[comp])))
+    return float(min(1.0, max(0.0, val)))
