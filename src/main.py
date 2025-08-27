@@ -1,8 +1,9 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize
-from pathlib import Path
 
 from src.config import CONFIG
 from src.export import export_psdm_json
@@ -119,28 +120,26 @@ def main() -> None:
         "verbose": 1,
         "heartbeat_seconds": 60,
     }
-    
-    gmms = fit_gmms(df, **gm_kwargs)
 
+    gmms = fit_gmms(df, **gm_kwargs)
 
     meta = {"records": len(df)}
     if "ts" in df.columns:
-        meta["time_range"] = {
-            "start": str(df["ts"].min()),
-            "end": str(df["ts"].max())
-        }
+        meta["time_range"] = {"start": str(df["ts"].min()), "end": str(df["ts"].max())}
     if "source" in CONFIG.get("data", {}):
         meta["source"] = CONFIG["data"]["source"]
-    
 
     try:
-        out_path = Path(CONFIG.get("output", {}).get("psdm_json", "out/psdm_model.json"))
+        out_path = Path(
+            CONFIG.get("output", {}).get("psdm_json", "out/psdm_model.json")
+        )
         pretty = bool(CONFIG.get("output", {}).get("pretty_json", False))
-        
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        export_psdm_json(out_path, df, probs, gmms, meta=meta, gmm_params=gm_kwargs, pretty=pretty)
+
+        export_psdm_json(
+            out_path, df, probs, gmms, meta=meta, gmm_params=gm_kwargs, pretty=pretty
+        )
         print(f"[export] PSDM JSON written to {out_path}")
     except Exception as e:
         print(f"[export] FAILED to write PSDM JSON: {e}")
