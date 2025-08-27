@@ -87,7 +87,6 @@ def build_psdm_payload_from_models(
         gmm_params = {
             "max_components": 3,
             "min_samples_per_state": 30,
-            # Match the training configuration in src/markov/gmm.py
             "covariance_type": "spherical",
             "random_seed": 42,
         }
@@ -150,7 +149,6 @@ def export_psdm_json(
         p: Pre-computed transition probability matrices
         gmms: Pre-computed GMM models
         meta: Optional metadata to include under "training_data" key
-        pretty: Whether to format JSON with indentation
 
     Returns:
         Path to the exported JSON file

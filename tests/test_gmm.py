@@ -128,7 +128,6 @@ def test_sample_value_deterministic(tiny_models, rng):
 
 
 def test_gmm_empty_state():
-    # Create all timestamps in the same 15-minute bucket
     timestamps = [pd.Timestamp("2024-01-01 00:00:00")] * 5
     df = pd.DataFrame(
         {

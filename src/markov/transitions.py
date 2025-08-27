@@ -5,7 +5,6 @@ from ._core import _transition_counts
 
 
 def build_transition_matrices(df: pd.DataFrame, *, dtype=np.float32) -> np.ndarray:
-    # Accumulate counts using an integer dtype to avoid floating-point drift
     counts = _transition_counts(df, dtype=np.uint32)
     row_sum = counts.sum(axis=2, keepdims=True)
     empty = row_sum == 0
