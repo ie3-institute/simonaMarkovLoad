@@ -83,7 +83,6 @@ def test_gmm_fit_recovery(rng):
         sorted_indices = np.argsort(means)
         sorted_means = means[sorted_indices]
         sorted_weights = weights[sorted_indices]
-        sorted_vars = variances[sorted_indices]
 
         assert np.abs(sorted_means[0] - 0.2) < 0.05
         assert np.abs(sorted_means[1] - 0.7) < 0.05

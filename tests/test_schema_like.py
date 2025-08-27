@@ -6,8 +6,8 @@ from src.export import build_psdm_payload_from_models
 
 
 def test_thresholds_right_formula(small_df, tiny_models):
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     thresholds = payload["value_model"]["discretization"]["thresholds_right"]
 
@@ -20,8 +20,8 @@ def test_thresholds_right_formula(small_df, tiny_models):
 
 
 def test_bucket_encoding_formula(small_df, tiny_models):
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     formula = payload["time_model"]["bucket_encoding"]["formula"]
     expected_formula = "bucket = month*192 + is_weekend*96 + quarter_hour"
@@ -30,8 +30,8 @@ def test_bucket_encoding_formula(small_df, tiny_models):
 
 
 def test_schema_structure_completeness(small_df, tiny_models):
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     expected_top_keys = {
         "schema",
@@ -94,8 +94,8 @@ def test_schema_structure_completeness(small_df, tiny_models):
 
 
 def test_schema_value_constraints(small_df, tiny_models):
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     assert payload["schema"] == "simonaMarkovLoad:psdm:1.0"
     assert payload["generator"]["name"] == "simonaMarkovLoad"
@@ -128,8 +128,8 @@ def test_schema_value_constraints(small_df, tiny_models):
 
 
 def test_generated_at_format(small_df, tiny_models):
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     generated_at = payload["generated_at"]
 
@@ -149,8 +149,8 @@ def test_generated_at_format(small_df, tiny_models):
 
 
 def test_json_serialization_round_trip(small_df, tiny_models):
-    P, gmms = tiny_models
-    original_payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    original_payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     json_string = json.dumps(original_payload)
 
@@ -177,8 +177,8 @@ def test_jsonschema_validation(small_df, tiny_models):
 
     jsonschema = pytest.importorskip("jsonschema")
 
-    P, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     schema = {
         "type": "object",

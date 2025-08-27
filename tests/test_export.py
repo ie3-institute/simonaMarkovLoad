@@ -9,9 +9,9 @@ from src.export import build_psdm_payload_from_models, export_psdm_json
 
 
 def test_export_payload_from_models(small_df, tiny_models):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
-    payload = build_psdm_payload_from_models(small_df, P, gmms)
+    payload = build_psdm_payload_from_models(small_df, p, gmms)
 
     required_keys = [
         "schema",
@@ -66,7 +66,7 @@ def test_export_payload_from_models(small_df, tiny_models):
     assert "gmms" in data
 
     transitions = data["transitions"]
-    assert transitions["shape"] == list(P.shape)
+    assert transitions["shape"] == list(p.shape)
     assert transitions["shape"] == [2304, n_states, n_states]
     assert transitions["dtype"] == "float32"
     assert transitions["encoding"] == "nested_lists"
@@ -84,7 +84,7 @@ def test_export_payload_from_models(small_df, tiny_models):
 
 
 def test_export_payload_with_metadata(small_df, tiny_models):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     meta = {
         "source": "test_data",
@@ -100,7 +100,7 @@ def test_export_payload_with_metadata(small_df, tiny_models):
     }
 
     payload = build_psdm_payload_from_models(
-        small_df, P, gmms, meta=meta, gmm_params=gmm_params
+        small_df, p, gmms, meta=meta, gmm_params=gmm_params
     )
 
     assert "training_data" in payload
@@ -110,12 +110,12 @@ def test_export_payload_with_metadata(small_df, tiny_models):
 
 
 def test_export_json_file_write(small_df, tiny_models):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_export.json"
 
-        result_path = export_psdm_json(output_path, small_df, P, gmms, pretty=True)
+        result_path = export_psdm_json(output_path, small_df, p, gmms, pretty=True)
 
         assert result_path == output_path
         assert output_path.exists()
@@ -133,12 +133,12 @@ def test_export_json_file_write(small_df, tiny_models):
 
 
 def test_export_json_compact(small_df, tiny_models):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "compact_export.json"
 
-        export_psdm_json(output_path, small_df, P, gmms, pretty=False)
+        export_psdm_json(output_path, small_df, p, gmms, pretty=False)
 
         with open(output_path, encoding="utf-8") as f:
             content = f.read()
@@ -150,20 +150,20 @@ def test_export_json_compact(small_df, tiny_models):
 def test_transitions_to_json_format(tiny_models):
     from src.export import transitions_to_json
 
-    P, _ = tiny_models
+    p, _ = tiny_models
 
-    transitions_json = transitions_to_json(P)
+    transitions_json = transitions_to_json(p)
 
     assert isinstance(transitions_json, list)
-    assert len(transitions_json) == P.shape[0]
+    assert len(transitions_json) == p.shape[0]
 
     for bucket_transitions in transitions_json:
         assert isinstance(bucket_transitions, list)
-        assert len(bucket_transitions) == P.shape[1]
+        assert len(bucket_transitions) == p.shape[1]
 
         for state_transitions in bucket_transitions:
             assert isinstance(state_transitions, list)
-            assert len(state_transitions) == P.shape[2]
+            assert len(state_transitions) == p.shape[2]
 
             for prob in state_transitions:
                 assert isinstance(prob, float)

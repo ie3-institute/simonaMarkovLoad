@@ -49,14 +49,12 @@ def small_df(rng):
     )
 
     df = assign_buckets(df, ts_col="timestamp")
-    df = discretize_states(df, value_col="value")
-
-    return df
+    return discretize_states(df, value_col="value")
 
 
 @pytest.fixture
 def tiny_models(small_df):
-    P = build_transition_matrices(small_df)
+    p = build_transition_matrices(small_df)
 
     gmms = fit_gmms(
         small_df,
@@ -68,4 +66,4 @@ def tiny_models(small_df):
         verbose=0,
     )
 
-    return P, gmms
+    return p, gmms

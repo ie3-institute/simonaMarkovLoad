@@ -5,21 +5,21 @@ from src.markov.buckets import bucket_id
 from src.markov.gmm import sample_value
 
 
-def simulate_step(P, gmms, bucket, state, rng):
-    next_state = rng.choice(P.shape[1], p=P[bucket, state, :])
+def simulate_step(p, gmms, bucket, state, rng):
+    next_state = rng.choice(p.shape[1], p=p[bucket, state, :])
     sampled_value = sample_value(gmms, bucket, next_state, rng=rng)
     return next_state, sampled_value
 
 
 def test_simulate_step_deterministic(tiny_models, rng):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     test_bucket, test_state = None, None
 
-    for bucket in range(min(100, P.shape[0])):
-        for state in range(P.shape[1]):
+    for bucket in range(min(100, p.shape[0])):
+        for state in range(p.shape[1]):
             if gmms[bucket][state] is not None:
-                transitions = P[bucket, state, :]
+                transitions = p[bucket, state, :]
                 if np.sum(transitions > 0.1) > 1:
                     test_bucket, test_state = bucket, state
                     break
@@ -27,8 +27,8 @@ def test_simulate_step_deterministic(tiny_models, rng):
             break
 
     if test_bucket is None:
-        for bucket in range(P.shape[0]):
-            for state in range(P.shape[1]):
+        for bucket in range(p.shape[0]):
+            for state in range(p.shape[1]):
                 if gmms[bucket][state] is not None:
                     test_bucket, test_state = bucket, state
                     break
@@ -38,26 +38,26 @@ def test_simulate_step_deterministic(tiny_models, rng):
     assert test_bucket is not None
 
     test_rng_1 = np.random.default_rng(789)
-    result_1 = simulate_step(P, gmms, test_bucket, test_state, test_rng_1)
+    result_1 = simulate_step(p, gmms, test_bucket, test_state, test_rng_1)
 
     test_rng_2 = np.random.default_rng(789)
-    result_2 = simulate_step(P, gmms, test_bucket, test_state, test_rng_2)
+    result_2 = simulate_step(p, gmms, test_bucket, test_state, test_rng_2)
 
     assert result_1 == result_2
 
     next_state, value = result_1
     assert isinstance(next_state, (int, np.integer))
-    assert 0 <= next_state < P.shape[1]
+    assert 0 <= next_state < p.shape[1]
     assert isinstance(value, (float, np.floating))
     assert 0 <= value <= 1
 
 
 def test_multi_step_simulation_properties(tiny_models, rng):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     start_bucket, start_state = None, None
-    for bucket in range(min(50, P.shape[0])):
-        for state in range(P.shape[1]):
+    for bucket in range(min(50, p.shape[0])):
+        for state in range(p.shape[1]):
             if gmms[bucket][state] is not None:
                 start_bucket, start_state = bucket, state
                 break
@@ -74,13 +74,13 @@ def test_multi_step_simulation_properties(tiny_models, rng):
     test_rng = np.random.default_rng(456)
 
     for step in range(n_steps):
-        current_bucket = (start_bucket + step // 10) % min(100, P.shape[0])
+        current_bucket = (start_bucket + step // 10) % min(100, p.shape[0])
 
         if gmms[current_bucket][current_state] is None:
             current_bucket = start_bucket
 
         next_state, value = simulate_step(
-            P, gmms, current_bucket, current_state, test_rng
+            p, gmms, current_bucket, current_state, test_rng
         )
 
         states_visited.append(next_state)
@@ -96,7 +96,7 @@ def test_multi_step_simulation_properties(tiny_models, rng):
     assert unique_states > 1
 
     for state in states_visited:
-        assert 0 <= state < P.shape[1]
+        assert 0 <= state < p.shape[1]
 
     mean_value = np.mean(values_sampled)
     std_value = np.std(values_sampled)
@@ -106,14 +106,14 @@ def test_multi_step_simulation_properties(tiny_models, rng):
 
 
 def test_simulate_step_state_transitions(tiny_models, rng):
-    P, gmms = tiny_models
+    p, gmms = tiny_models
 
     test_cases = []
 
-    for bucket in range(min(50, P.shape[0])):
-        for state in range(P.shape[1]):
+    for bucket in range(min(50, p.shape[0])):
+        for state in range(p.shape[1]):
             if gmms[bucket][state] is not None:
-                transitions = P[bucket, state, :]
+                transitions = p[bucket, state, :]
                 if np.sum(transitions > 0.01) >= 2:
                     test_cases.append((bucket, state, transitions))
                     if len(test_cases) >= 3:
@@ -132,7 +132,7 @@ def test_simulate_step_state_transitions(tiny_models, rng):
     test_rng = np.random.default_rng(999)
 
     for _ in range(n_trials):
-        next_state, _ = simulate_step(P, gmms, bucket, state, test_rng)
+        next_state, _ = simulate_step(p, gmms, bucket, state, test_rng)
         next_states.append(next_state)
 
     unique_states, counts = np.unique(next_states, return_counts=True)

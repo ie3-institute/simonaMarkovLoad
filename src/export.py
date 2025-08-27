@@ -23,10 +23,10 @@ def gmms_to_json(
     """
     buckets = []
 
-    for bucket_idx, bucket_states in enumerate(gmms):
+    for _bucket_idx, bucket_states in enumerate(gmms):
         states = []
 
-        for state_idx, gmm in enumerate(bucket_states):
+        for _state_idx, gmm in enumerate(bucket_states):
             if gmm is None:
                 states.append(None)
             else:
@@ -47,23 +47,22 @@ def gmms_to_json(
     return buckets
 
 
-def transitions_to_json(P: np.ndarray) -> list[list[list[float]]]:
+def transitions_to_json(p: np.ndarray) -> list[list[list[float]]]:
     """Convert transition matrices to JSON-serializable format.
 
     Args:
-        P: Transition probability matrices of shape (n_buckets, n_states, n_states)
+        p: Transition probability matrices of shape (n_buckets, n_states, n_states)
 
     Returns:
         Nested list representation of transition matrices
     """
 
-    P_float32 = P.astype(np.float32)
-    return P_float32.tolist()
+    return p.astype(np.float32).tolist()
 
 
 def build_psdm_payload_from_models(
     df: pd.DataFrame,
-    P: np.ndarray,
+    p: np.ndarray,
     gmms: list[list[tuple[np.ndarray, np.ndarray, np.ndarray] | None]],
     meta: dict | None = None,
     gmm_params: dict | None = None,
@@ -72,7 +71,7 @@ def build_psdm_payload_from_models(
 
     Args:
         df: Training dataframe (used for metadata only)
-        P: Pre-computed transition probability matrices of shape (n_buckets, n_states, n_states)
+        p: Pre-computed transition probability matrices of shape (n_buckets, n_states, n_states)
         gmms: Pre-computed GMM models as nested list [bucket][state]
         meta: Optional metadata to include under "training_data" key
 
@@ -119,10 +118,10 @@ def build_psdm_payload_from_models(
         },
         "data": {
             "transitions": {
-                "shape": list(P.shape),
+                "shape": list(p.shape),
                 "dtype": "float32",
                 "encoding": "nested_lists",
-                "values": transitions_to_json(P),
+                "values": transitions_to_json(p),
             },
             "gmms": {"buckets": gmms_to_json(gmms)},
         },
@@ -137,7 +136,7 @@ def build_psdm_payload_from_models(
 def export_psdm_json(
     path: Path,
     df: pd.DataFrame,
-    P: np.ndarray,
+    p: np.ndarray,
     gmms: list[list[tuple[np.ndarray, np.ndarray, np.ndarray] | None]],
     meta: dict | None = None,
     gmm_params: dict | None = None,
@@ -147,7 +146,7 @@ def export_psdm_json(
 
     Args:
         path: Output file path
-        P: Pre-computed transition probability matrices
+        p: Pre-computed transition probability matrices
         gmms: Pre-computed GMM models
         meta: Optional metadata to include under "training_data" key
         pretty: Whether to format JSON with indentation
@@ -155,7 +154,7 @@ def export_psdm_json(
     Returns:
         Path to the exported JSON file
     """
-    payload = build_psdm_payload_from_models(df, P, gmms, meta, gmm_params)
+    payload = build_psdm_payload_from_models(df, p, gmms, meta, gmm_params)
 
     indent = 2 if pretty else None
 
