@@ -46,9 +46,9 @@ def test_simulate_step_deterministic(tiny_models, rng):
     assert result_1 == result_2
 
     next_state, value = result_1
-    assert isinstance(next_state, (int, np.integer))
+    assert isinstance(next_state, int | np.integer)
     assert 0 <= next_state < p.shape[1]
-    assert isinstance(value, (float, np.floating))
+    assert isinstance(value, float | np.floating)
     assert 0 <= value <= 1
 
 

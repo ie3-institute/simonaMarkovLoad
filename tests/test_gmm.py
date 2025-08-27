@@ -13,12 +13,12 @@ def test_gmm_structure(tiny_models):
 
     n_states = CONFIG["model"]["n_states"]
 
-    for bucket_idx, bucket_states in enumerate(gmms):
+    for _bucket_idx, bucket_states in enumerate(gmms):
         assert len(bucket_states) == n_states
 
-        for state_idx, gmm in enumerate(bucket_states):
+        for _state_idx, gmm in enumerate(bucket_states):
             if gmm is not None:
-                assert isinstance(gmm, (tuple, list))
+                assert isinstance(gmm, tuple | list)
                 assert len(gmm) == 3
 
                 weights, means, variances = gmm
