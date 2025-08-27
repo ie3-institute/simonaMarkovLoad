@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from config import CONFIG
+from src.config import CONFIG
 
 
 def gmms_to_json(
