@@ -16,11 +16,13 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Check Snapshot
-        if: contains(steps.metadata.outputs.new-version, 'snap')
+      - name: Check Pre-Release
         run: |
-          echo "::error::Snapshot versions are not allowed – workflow stopped."
-          exit 1 
+          NEW="${{ steps.metadata.outputs.new-version }}"
+          if [[ "$NEW" =~ ([0-9]+!)?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]*|\.dev[0-9]*) ]]; then
+            echo "::error::Pre-release version ($NEW) detected – workflow stopped."
+            exit 1
+          fi
 
       - name: Approve the PR
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'

@@ -37,26 +37,21 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
 
     df = load_timeseries(normalize=True, discretize=True)
 
-    # two rows (first diff removed) & five columns
     assert df.shape == (2, 4)
     assert list(df.columns) == ["timestamp", "power", "state", "bucket"]
 
-    # timestamps
     expected_ts = pd.Series(
         pd.to_datetime(["2021-01-01 00:15:00", "2021-01-01 00:30:00"]),
         name="timestamp",
     )
     pd.testing.assert_series_equal(df["timestamp"], expected_ts, check_names=False)
 
-    # normalized power column: both values become 0.0
     expected_power = pd.Series([0.0, 0.0], name="power", dtype="float32")
     pd.testing.assert_series_equal(df["power"], expected_power)
 
-    # state column: both values land in bin 0
     expected_state = pd.Series([0, 0], name="state", dtype="int64")
     pd.testing.assert_series_equal(df["state"], expected_state)
 
-    # bucket IDs
     expected_bucket = pd.Series(
         [bucket_id(ts) for ts in expected_ts], name="bucket", dtype="uint16"
     )

@@ -32,3 +32,16 @@ def discretize_power(
 
     df[state_col] = states
     return df
+
+
+def discretize_states(
+    df: pd.DataFrame,
+    *,
+    value_col: str = "value",
+    state_col: str = "state",
+) -> pd.DataFrame:
+    """Discretize continuous values into discrete states using thresholds.
+
+    This is a wrapper around discretize_power with more generic naming.
+    """
+    return discretize_power(df, col=value_col, state_col=state_col)
