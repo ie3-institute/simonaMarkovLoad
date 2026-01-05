@@ -66,6 +66,9 @@ def build_psdm_payload_from_models(
     gmms: list[list[tuple[np.ndarray, np.ndarray, np.ndarray] | None]],
     meta: dict | None = None,
     gmm_params: dict | None = None,
+    *,
+    reference_power_kw: float | None = None,
+    min_power_kw: float | None = None,
 ) -> dict:
     """Build the complete PSDM JSON payload from pre-computed models.
 
@@ -91,6 +94,12 @@ def build_psdm_payload_from_models(
             "random_seed": 42,
         }
 
+    normalization = {"method": "minmax_per_series"}
+    if reference_power_kw is not None:
+        normalization["reference_power"] = {"value": reference_power_kw, "unit": "kW"}
+    if min_power_kw is not None:
+        normalization["min_power"] = {"value": min_power_kw, "unit": "kW"}
+
     payload = {
         "schema": "simonaMarkovLoad:psdm:1.0",
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -109,7 +118,7 @@ def build_psdm_payload_from_models(
         },
         "value_model": {
             "value_unit": "normalized",
-            "normalization": {"method": "minmax_per_series"},
+            "normalization": normalization,
             "discretization": {"states": n_states, "thresholds_right": thresholds},
         },
         "parameters": {
@@ -141,6 +150,9 @@ def export_psdm_json(
     meta: dict | None = None,
     gmm_params: dict | None = None,
     pretty: bool = False,
+    *,
+    reference_power_kw: float | None = None,
+    min_power_kw: float | None = None,
 ) -> Path:
     """Export pre-computed models to PSDM JSON format.
 
@@ -153,7 +165,15 @@ def export_psdm_json(
     Returns:
         Path to the exported JSON file
     """
-    payload = build_psdm_payload_from_models(df, p, gmms, meta, gmm_params)
+    payload = build_psdm_payload_from_models(
+        df,
+        p,
+        gmms,
+        meta,
+        gmm_params,
+        reference_power_kw=reference_power_kw,
+        min_power_kw=min_power_kw,
+    )
 
     indent = 2 if pretty else None
 
