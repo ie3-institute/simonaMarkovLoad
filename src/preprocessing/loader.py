@@ -1,5 +1,5 @@
-from pathlib import Path
 import math
+from pathlib import Path
 
 import pandas as pd
 
@@ -69,6 +69,10 @@ def load_timeseries(
     result = pd.concat(frames, ignore_index=True)
 
     if math.isfinite(global_min) and math.isfinite(global_max):
-        result.attrs["power_stats"] = {"min": global_min, "max": global_max, "unit": "kW"}
+        result.attrs["power_stats"] = {
+            "min": global_min,
+            "max": global_max,
+            "unit": "kW",
+        }
 
     return result
