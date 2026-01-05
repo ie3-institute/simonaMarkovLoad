@@ -109,13 +109,36 @@ def test_export_payload_with_metadata(small_df, tiny_models):
     assert payload["parameters"]["gmm"] == gmm_params
 
 
+def test_export_payload_with_reference_power(small_df, tiny_models):
+    p, gmms = tiny_models
+
+    payload = build_psdm_payload_from_models(
+        small_df,
+        p,
+        gmms,
+        reference_power_kw=4.5,
+        min_power_kw=0.2,
+    )
+
+    normalization = payload["value_model"]["normalization"]
+    assert normalization["reference_power"] == {"value": 4.5, "unit": "kW"}
+    assert normalization["min_power"] == {"value": 0.2, "unit": "kW"}
+
+
 def test_export_json_file_write(small_df, tiny_models):
     p, gmms = tiny_models
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_export.json"
 
-        result_path = export_psdm_json(output_path, small_df, p, gmms, pretty=True)
+        result_path = export_psdm_json(
+            output_path,
+            small_df,
+            p,
+            gmms,
+            pretty=True,
+            reference_power_kw=3.3,
+        )
 
         assert result_path == output_path
         assert output_path.exists()
@@ -138,7 +161,14 @@ def test_export_json_compact(small_df, tiny_models):
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "compact_export.json"
 
-        export_psdm_json(output_path, small_df, p, gmms, pretty=False)
+        export_psdm_json(
+            output_path,
+            small_df,
+            p,
+            gmms,
+            pretty=False,
+            reference_power_kw=3.3,
+        )
 
         with open(output_path, encoding="utf-8") as f:
             content = f.read()
