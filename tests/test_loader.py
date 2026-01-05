@@ -57,6 +57,9 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     )
     pd.testing.assert_series_equal(df["bucket"], expected_bucket)
 
+    stats = df.attrs.get("power_stats")
+    assert stats == {"min": 2.0, "max": 2.0, "unit": "kW"}
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
