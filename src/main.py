@@ -134,6 +134,9 @@ def _plot_simulation_diagnostics(
 
 def main() -> None:
     df = load_timeseries(normalize=True, discretize=True)
+    power_stats = df.attrs.get("power_stats", {})
+    reference_power = power_stats.get("max")
+    min_power = power_stats.get("min")
     if "bucket" not in df.columns:
         df = assign_buckets(df)
 
@@ -167,7 +170,15 @@ def main() -> None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         export_psdm_json(
-            out_path, df, probs, gmms, meta=meta, gmm_params=gm_kwargs, pretty=pretty
+            out_path,
+            df,
+            probs,
+            gmms,
+            meta=meta,
+            gmm_params=gm_kwargs,
+            pretty=pretty,
+            reference_power_kw=reference_power,
+            min_power_kw=min_power,
         )
         print(f"[export] PSDM JSON written to {out_path}")
     except Exception as e:
