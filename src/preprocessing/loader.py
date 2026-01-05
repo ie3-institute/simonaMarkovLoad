@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 
 import pandas as pd
 
@@ -28,6 +29,8 @@ def load_timeseries(
 
     # Read columns (ts, value) from each file
     frames: list[pd.DataFrame] = []
+    global_min = math.inf
+    global_max = -math.inf
     for path in csv_files:
         df = pd.read_csv(
             path,
@@ -47,6 +50,12 @@ def load_timeseries(
 
         df = df.dropna(subset=["power"]).drop(columns="cum_kwh").reset_index(drop=True)
 
+        if not df.empty:
+            power_min = float(df["power"].min())
+            power_max = float(df["power"].max())
+            global_min = min(global_min, power_min)
+            global_max = max(global_max, power_max)
+
         if normalize:
             df = normalize_power(df, col="power", eps=eps)
 
@@ -57,4 +66,9 @@ def load_timeseries(
 
         frames.append(df)
 
-    return pd.concat(frames, ignore_index=True)
+    result = pd.concat(frames, ignore_index=True)
+
+    if math.isfinite(global_min) and math.isfinite(global_max):
+        result.attrs["power_stats"] = {"min": global_min, "max": global_max, "unit": "kW"}
+
+    return result
