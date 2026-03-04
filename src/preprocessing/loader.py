@@ -34,7 +34,7 @@ def load_timeseries(
     for path in csv_files:
         df = pd.read_csv(
             path,
-            skiprows=21,
+            skiprows=cfg_in["skiprows"],
             usecols=[cfg_in["timestamp_col"], cfg_in["value_col"]],
             dtype={cfg_in["value_col"]: value_dtype},
             parse_dates=[cfg_in["timestamp_col"]],
@@ -63,6 +63,7 @@ def load_timeseries(
             df = discretize_power(df, col="power", state_col="state")
 
         df = assign_buckets(df, inplace=True)
+        df["source"] = path.stem
 
         frames.append(df)
 

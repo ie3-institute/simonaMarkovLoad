@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
 
-from ._core import _transition_counts
+from .transition_counts import build_transition_counts
 
 
-def build_transition_matrices(df: pd.DataFrame, *, dtype=np.float32) -> np.ndarray:
-    counts = _transition_counts(df, dtype=np.uint32)
+def build_transition_matrices(
+    df: pd.DataFrame,
+    *,
+    counts: np.ndarray | None = None,
+    dtype=np.float32,
+) -> np.ndarray:
+    if counts is None:
+        counts = build_transition_counts(df, dtype=np.uint32)
+    counts = counts.copy()
     row_sum = counts.sum(axis=2, keepdims=True)
     empty = row_sum == 0
     if np.any(empty):

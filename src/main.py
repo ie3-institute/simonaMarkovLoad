@@ -143,7 +143,7 @@ def main() -> None:
     val_col = _detect_value_col(df)
 
     counts = build_transition_counts(df)
-    probs = build_transition_matrices(df)
+    probs = build_transition_matrices(df, counts=counts)
 
     _plot_first_25_buckets(counts, probs)
 
