@@ -79,7 +79,7 @@ def _simulate_series(
 def _plot_first_25_buckets(counts: np.ndarray, probs: np.ndarray) -> None:
     buckets = range(25)
     fig, axes = plt.subplots(5, 5, figsize=(15, 15), sharex=True, sharey=True)
-    vmax = probs[list(buckets)].max()
+    vmax = float(np.percentile(probs[list(buckets)], 99))
     norm = Normalize(vmin=0, vmax=vmax)
 
     for idx, b in enumerate(buckets):
@@ -123,11 +123,12 @@ def _plot_simulation_diagnostics(
     plt.show()
 
     sim["hour"] = sim["timestamp"].dt.hour
-    plt.figure(figsize=(10, 4))
-    sim.boxplot(column="x_sim", by="hour", grid=False)
-    plt.title("Simulated power by hour of day")
-    plt.xlabel("hour of day")
-    plt.ylabel("normalised load x")
+    fig, ax = plt.subplots(figsize=(10, 4))
+    sim.boxplot(column="x_sim", by="hour", grid=False, ax=ax)
+    fig.suptitle("")
+    ax.set_title("Simulated power by hour of day")
+    ax.set_xlabel("hour of day")
+    ax.set_ylabel("normalised load x")
     plt.tight_layout()
     plt.show()
 
@@ -143,7 +144,7 @@ def main() -> None:
     val_col = _detect_value_col(df)
 
     counts = build_transition_counts(df)
-    probs = build_transition_matrices(df)
+    probs = build_transition_matrices(df, counts=counts)
 
     _plot_first_25_buckets(counts, probs)
 

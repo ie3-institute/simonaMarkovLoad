@@ -37,8 +37,8 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
 
     df = load_timeseries(normalize=True, discretize=True)
 
-    assert df.shape == (2, 4)
-    assert list(df.columns) == ["timestamp", "power", "state", "bucket"]
+    assert df.shape == (2, 5)
+    assert list(df.columns) == ["timestamp", "power", "state", "bucket", "source"]
 
     expected_ts = pd.Series(
         pd.to_datetime(["2021-01-01 00:15:00", "2021-01-01 00:30:00"]),
