@@ -12,5 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added GMM feature to project [#12](https://github.com/ie3-institute/simonaMarkovLoad/issues/12)
 - Added `JSON` export and improve simulation robustness [#27](https://github.com/ie3-institute/simonaMarkovLoad/issues/27)
 
+### Fixed
+- Transition counts are now computed per source file and aggregated, preventing spurious cross-household transitions [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
+- `skiprows` is now read from config instead of being hardcoded [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
+- Removed duplicate `_core.py`; `build_transition_matrices` accepts pre-computed counts to avoid redundant computation [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
+
 ### Changed
 - Compute instantaneous kW from cumulative kWh via 15-minute differencing [#1](https://github.com/ie3-institute/simonaMarkovLoad/issues/1)
