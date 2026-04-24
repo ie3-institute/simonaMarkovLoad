@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 black = "^26.3.1"
 isort = "^8.0.1"
 ruff = "^0.15.11"
-pre-commit = "^4.5.1"
+pre-commit = "^4.6.0"
 pytest = "^8.4.2"
 
 [[tool.poetry.packages]]
