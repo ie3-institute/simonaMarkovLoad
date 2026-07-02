@@ -78,7 +78,9 @@ def _simulate_series(
 
 def _plot_first_25_buckets(counts: np.ndarray, probs: np.ndarray) -> None:
     buckets = range(25)
-    fig, axes = plt.subplots(5, 5, figsize=(15, 15), sharex=True, sharey=True)
+    fig, axes = plt.subplots(
+        5, 5, figsize=(15, 15), sharex=True, sharey=True, layout="constrained"
+    )
     vmax = float(np.percentile(probs[list(buckets)], 99))
     norm = Normalize(vmin=0, vmax=vmax)
 
@@ -95,9 +97,8 @@ def _plot_first_25_buckets(counts: np.ndarray, probs: np.ndarray) -> None:
     for ax in axes.flat[len(buckets) :]:
         ax.axis("off")
 
-    fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.6, label="p")
+    fig.colorbar(im, ax=axes, shrink=0.6, label="p")
     fig.suptitle("Transition probabilities – buckets 0–24", fontsize=14)
-    plt.tight_layout(rect=[0, 0, 0.97, 0.96])
     plt.show()
 
 
@@ -136,7 +137,7 @@ def _plot_simulation_diagnostics(
 def main() -> None:
     df = load_timeseries(normalize=True, discretize=True)
     power_stats = df.attrs.get("power_stats", {})
-    reference_power = power_stats.get("max")
+    max_power = power_stats.get("max")
     min_power = power_stats.get("min")
     if "bucket" not in df.columns:
         df = assign_buckets(df)
@@ -178,7 +179,7 @@ def main() -> None:
             meta=meta,
             gmm_params=gm_kwargs,
             pretty=pretty,
-            reference_power_kw=reference_power,
+            max_power_kw=max_power,
             min_power_kw=min_power,
         )
         print(f"[export] PSDM JSON written to {out_path}")

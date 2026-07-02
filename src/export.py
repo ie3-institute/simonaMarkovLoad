@@ -67,7 +67,7 @@ def build_psdm_payload_from_models(
     meta: dict | None = None,
     gmm_params: dict | None = None,
     *,
-    reference_power_kw: float | None = None,
+    max_power_kw: float | None = None,
     min_power_kw: float | None = None,
 ) -> dict:
     """Build the complete PSDM JSON payload from pre-computed models.
@@ -94,9 +94,9 @@ def build_psdm_payload_from_models(
             "random_seed": 42,
         }
 
-    normalization = {"method": "minmax_per_series"}
-    if reference_power_kw is not None:
-        normalization["reference_power"] = {"value": reference_power_kw, "unit": "kW"}
+    normalization = {"method": "minmax_global"}
+    if max_power_kw is not None:
+        normalization["max_power"] = {"value": max_power_kw, "unit": "kW"}
     if min_power_kw is not None:
         normalization["min_power"] = {"value": min_power_kw, "unit": "kW"}
 
@@ -151,7 +151,7 @@ def export_psdm_json(
     gmm_params: dict | None = None,
     pretty: bool = False,
     *,
-    reference_power_kw: float | None = None,
+    max_power_kw: float | None = None,
     min_power_kw: float | None = None,
 ) -> Path:
     """Export pre-computed models to PSDM JSON format.
@@ -171,7 +171,7 @@ def export_psdm_json(
         gmms,
         meta,
         gmm_params,
-        reference_power_kw=reference_power_kw,
+        max_power_kw=max_power_kw,
         min_power_kw=min_power_kw,
     )
 

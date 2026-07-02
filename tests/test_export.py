@@ -49,7 +49,7 @@ def test_export_payload_from_models(small_df, tiny_models):
 
     value_model = payload["value_model"]
     assert value_model["value_unit"] == "normalized"
-    assert value_model["normalization"]["method"] == "minmax_per_series"
+    assert value_model["normalization"]["method"] == "minmax_global"
 
     discretization = value_model["discretization"]
     assert discretization["states"] == n_states
@@ -109,19 +109,19 @@ def test_export_payload_with_metadata(small_df, tiny_models):
     assert payload["parameters"]["gmm"] == gmm_params
 
 
-def test_export_payload_with_reference_power(small_df, tiny_models):
+def test_export_payload_with_max_power(small_df, tiny_models):
     p, gmms = tiny_models
 
     payload = build_psdm_payload_from_models(
         small_df,
         p,
         gmms,
-        reference_power_kw=4.5,
+        max_power_kw=4.5,
         min_power_kw=0.2,
     )
 
     normalization = payload["value_model"]["normalization"]
-    assert normalization["reference_power"] == {"value": 4.5, "unit": "kW"}
+    assert normalization["max_power"] == {"value": 4.5, "unit": "kW"}
     assert normalization["min_power"] == {"value": 0.2, "unit": "kW"}
 
 
@@ -137,7 +137,7 @@ def test_export_json_file_write(small_df, tiny_models):
             p,
             gmms,
             pretty=True,
-            reference_power_kw=3.3,
+            max_power_kw=3.3,
         )
 
         assert result_path == output_path
@@ -167,7 +167,7 @@ def test_export_json_compact(small_df, tiny_models):
             p,
             gmms,
             pretty=False,
-            reference_power_kw=3.3,
+            max_power_kw=3.3,
         )
 
         with open(output_path, encoding="utf-8") as f:

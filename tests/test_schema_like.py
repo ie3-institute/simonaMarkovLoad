@@ -109,7 +109,7 @@ def test_schema_value_constraints(small_df, tiny_models):
     assert payload["time_model"]["timezone"] == "Europe/Berlin"
 
     assert payload["value_model"]["value_unit"] == "normalized"
-    assert payload["value_model"]["normalization"]["method"] == "minmax_per_series"
+    assert payload["value_model"]["normalization"]["method"] == "minmax_global"
 
     assert payload["parameters"]["transitions"]["empty_row_strategy"] == "self_loop"
 

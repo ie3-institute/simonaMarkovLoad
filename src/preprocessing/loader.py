@@ -56,12 +56,6 @@ def load_timeseries(
             global_min = min(global_min, power_min)
             global_max = max(global_max, power_max)
 
-        if normalize:
-            df = normalize_power(df, col="power", eps=eps)
-
-        if discretize:
-            df = discretize_power(df, col="power", state_col="state")
-
         df = assign_buckets(df, inplace=True)
         df["source"] = path.stem
 
@@ -75,5 +69,13 @@ def load_timeseries(
             "max": global_max,
             "unit": "kW",
         }
+
+    # Normalize over the concatenated data so the scale matches the global
+    # min/max exported to PSDM (per-file scaling would mix incompatible scales).
+    if normalize:
+        result = normalize_power(result, col="power", eps=eps)
+
+    if discretize:
+        result = discretize_power(result, col="power", state_col="state")
 
     return result
