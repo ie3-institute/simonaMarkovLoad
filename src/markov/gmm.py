@@ -77,47 +77,55 @@ def fit_gmms(
         faulthandler.enable()
         faulthandler.dump_traceback_later(heartbeat_seconds, repeat=True)
 
-    grouped = (
-        df[[bucket_col, state_col, value_col]]
-        .groupby([bucket_col, state_col])[value_col]
-        .apply(list)
-        .to_dict()
-    )
-
-    tasks = [
-        ((b, s), grouped.get((b, s), []))
-        for b in range(NUM_BUCKETS)
-        for s in range(N_STATES)
-    ]
-
-    iterable = (
-        tqdm(tasks, desc="Fitting GMMs", unit="model") if verbose and tqdm else tasks
-    )
-
-    def _worker(item):
-        (b, s), x_list = item
-        x = np.asarray(x_list, dtype=float)
-        return (
-            b,
-            s,
-            _fit_single(
-                x,
-                min_samples=min_samples,
-                k_candidates=k_candidates,
-                random_state=random_state,
-            ),
+    try:
+        grouped = (
+            df[[bucket_col, state_col, value_col]]
+            .groupby([bucket_col, state_col])[value_col]
+            .apply(list)
+            .to_dict()
         )
 
-    results = joblib.Parallel(n_jobs=n_jobs, verbose=verbose)(
-        joblib.delayed(_worker)(task) for task in iterable
-    )
+        tasks = [
+            ((b, s), grouped.get((b, s), []))
+            for b in range(NUM_BUCKETS)
+            for s in range(N_STATES)
+        ]
 
-    gmms: GaussianBucketModels = [
-        [None for _ in range(N_STATES)] for _ in range(NUM_BUCKETS)
-    ]
-    for b, s, gmm_tuple in results:
-        gmms[b][s] = gmm_tuple
-    return gmms
+        iterable = (
+            tqdm(tasks, desc="Fitting GMMs", unit="model")
+            if verbose and tqdm
+            else tasks
+        )
+
+        def _worker(item):
+            (b, s), x_list = item
+            x = np.asarray(x_list, dtype=float)
+            return (
+                b,
+                s,
+                _fit_single(
+                    x,
+                    min_samples=min_samples,
+                    k_candidates=k_candidates,
+                    random_state=random_state,
+                ),
+            )
+
+        results = joblib.Parallel(n_jobs=n_jobs, verbose=verbose)(
+            joblib.delayed(_worker)(task) for task in iterable
+        )
+
+        gmms: GaussianBucketModels = [
+            [None for _ in range(N_STATES)] for _ in range(NUM_BUCKETS)
+        ]
+        for b, s, gmm_tuple in results:
+            gmms[b][s] = gmm_tuple
+        return gmms
+    finally:
+        if heartbeat_seconds:
+            import faulthandler
+
+            faulthandler.cancel_dump_traceback_later()
 
 
 def sample_value(
