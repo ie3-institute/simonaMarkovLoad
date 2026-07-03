@@ -98,7 +98,7 @@ def _plot_first_25_buckets(counts: np.ndarray, probs: np.ndarray) -> None:
         ax.axis("off")
 
     fig.colorbar(im, ax=axes, shrink=0.6, label="p")
-    fig.suptitle("Transition probabilities – buckets 0–24", fontsize=14)
+    fig.suptitle("Transition probabilities - buckets 0-24", fontsize=14)
     plt.show()
 
 
@@ -108,7 +108,7 @@ def _plot_simulation_diagnostics(
     first_day = sim.iloc[:PER_DAY]
     plt.figure(figsize=(10, 3))
     plt.plot(first_day["timestamp"], first_day["x_sim"], marker=".")
-    plt.title("Simulated power – first day")
+    plt.title("Simulated power - first day")
     plt.ylabel("normalised load x")
     plt.tight_layout()
     plt.show()

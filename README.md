@@ -15,10 +15,11 @@ The trained model is exported in the **PSDM JSON format** (`simonaMarkovLoad:psd
 ## ⚙️ Features
 
 - Conversion of cumulative 15-minute kWh readings to instantaneous power (kW) via differencing
+- **Global min/max normalisation** across all input files (`minmax_global`); the kW scale is exported with the model so consumers can de-normalise
 - Discretisation of continuous power values into **10 states** using quadratic thresholds
 - **2,304 temporal buckets** based on month, weekday/weekend flag, and quarter-hour slot
-- **Laplace-smoothed Markov transition matrices** per bucket (handles sparse data gracefully)
-- **GMM fitting** per (bucket, state) pair with automatic component selection via BIC (1–3 components)
+- **Markov transition matrices** per bucket with a **self-loop fallback** for empty rows (handles sparse data gracefully)
+- **GMM fitting** per (bucket, state) pair with automatic component selection via BIC (1-3 components)
 - Parallel training with `joblib`
 - Export of the complete model as a **PSDM JSON** file
 - Built-in simulation and diagnostic visualisations
@@ -113,7 +114,7 @@ input:
 
 model:
   n_states: 10              # Number of load states
-  laplace_alpha: 1.0        # Laplace smoothing for transition matrices
+  laplace_alpha: 1.0        # Recorded in export metadata (smoothing not applied; self-loop fallback is used)
 ```
 
 ### 3. Run the pipeline
@@ -124,11 +125,12 @@ poetry run python -m src.main
 
 This will:
 
-1. Load and preprocess raw CSV data
+1. Load and preprocess raw CSV data (kWh → kW, global min/max normalisation, discretisation)
 2. Assign temporal buckets to each observation
 3. Build Markov transition matrices (2,304 × 10 × 10)
 4. Fit GMMs for each (bucket, state) pair in parallel
 5. Export the model to `out/psdm_model.json`
+6. Run a short simulation and display diagnostic plots
 
 ### 4. Output
 
@@ -137,22 +139,42 @@ The model is written to `out/psdm_model.json` by default.
 ```
 {
   "schema": "simonaMarkovLoad:psdm:1.0",
-  "meta": { ... },
-  "timeModel": {
-    "nBuckets": 2304,
-    "bucketFormula": "month*192 + is_weekend*96 + quarter_hour"
+  "generated_at": "...",
+  "generator": { "name": "simonaMarkovLoad", "config": { ... } },
+  "time_model": {
+    "bucket_count": 2304,
+    "bucket_encoding": { "formula": "bucket = month*192 + is_weekend*96 + quarter_hour" },
+    "sampling_interval_minutes": 15,
+    "timezone": "Europe/Berlin"
   },
-  "valueModel": { "nStates": 10, "stateThresholds": [ ... ] },
+  "value_model": {
+    "value_unit": "normalized",
+    "normalization": {
+      "method": "minmax_global",
+      "max_power": { "value": ..., "unit": "kW" },
+      "min_power": { "value": ..., "unit": "kW" }
+    },
+    "discretization": { "states": 10, "thresholds_right": [ ... ] }
+  },
+  "parameters": {
+    "transitions": { "empty_row_strategy": "self_loop" },
+    "gmm": { ... }
+  },
   "data": {
-    "transitionMatrices": [ ... ],
-    "gmms": [ ... ]
-  }
+    "transitions": { "shape": [2304, 10, 10], "dtype": "float32", "values": [ ... ] },
+    "gmms": { "buckets": [ { "states": [ { "weights": [...], "means": [...], "variances": [...] }, ... ] }, ... ] }
+  },
+  "training_data": { "records": ..., "time_range": { ... } }
 }
 ```
 
 ---
 
 ## 🔍 How it works
+
+### Normalisation
+
+Instantaneous power values from **all** input files are normalised together using the global minimum and maximum (`minmax_global`). The kW scale (`min_power`, `max_power`) is written to the exported JSON so that consumers such as Simona can map normalised values back to physical power.
 
 ### Bucketing
 
@@ -170,7 +192,7 @@ For each bucket a 10×10 transition matrix is estimated from historical data. Ro
 
 ### GMM sampling
 
-Within each (bucket, state) pair a GMM models the distribution of normalised power values. The number of components (1–3) is selected automatically by minimising BIC. At inference time a component is chosen according to its mixture weight, then a value is drawn from the corresponding Gaussian and clamped to [0, 1].
+Within each (bucket, state) pair a GMM models the distribution of normalised power values. The number of components (1-3) is selected automatically by minimising BIC. At inference time a component is chosen according to its mixture weight, then a value is drawn from the corresponding Gaussian and clamped to [0, 1].
 
 ---
 
@@ -186,9 +208,9 @@ poetry run pytest
 
 Pre-commit hooks enforce:
 
-- **black** – code formatting (line length 88)
-- **isort** – import ordering
-- **ruff** – linting (E, F, W, I, N, UP, B, C4, PIE, SIM, RET rules)
+- **black** - code formatting (line length 88)
+- **isort** - import ordering
+- **ruff** - linting (E, F, W, I, N, UP, B, C4, PIE, SIM, RET rules)
 
 ---
 
@@ -196,12 +218,12 @@ Pre-commit hooks enforce:
 
 | Package | Version | Purpose |
 |---|---|---|
-| numpy | >=2.2.5,<3 | Numerical arrays |
+| numpy | >=2.5.0,<3 | Numerical arrays |
 | pandas | >=2.2.3,<3 | Data manipulation |
-| scikit-learn | >=1.6.1,<2 | Gaussian Mixture Models |
+| scikit-learn | >=1.9.0,<2 | Gaussian Mixture Models |
 | joblib | >=1.4.2,<2 | Parallel GMM fitting |
-| matplotlib | >=3.10.1,<4 | Visualisation |
-| tqdm | >=4.67.1,<5 | Progress bars |
+| matplotlib | >=3.11.0,<4 | Visualisation |
+| tqdm | >=4.68.3,<5 | Progress bars |
 
 ---
 
@@ -213,4 +235,4 @@ Pre-commit hooks enforce:
 
 If you have any questions, feel free to reach out to:
 
-**Philipp Schmelter** — philipp.schmelter@tu-dortmund.de
+**Philipp Schmelter** - philipp.schmelter@tu-dortmund.de

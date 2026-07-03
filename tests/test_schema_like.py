@@ -96,6 +96,21 @@ def test_schema_structure_completeness(small_df, tiny_models):
     assert set(gmms_data.keys()) == expected_gmm_keys
 
 
+def test_schema_structure_with_power_bounds(small_df, tiny_models):
+    """The full pipeline always exports min/max power; PSDM rejects models
+    without them, so the complete normalization block must be pinned."""
+    p, gmms = tiny_models
+    payload = build_psdm_payload_from_models(
+        small_df, p, gmms, max_power_kw=31.5, min_power_kw=-2.4
+    )
+
+    normalization = payload["value_model"]["normalization"]
+    assert set(normalization.keys()) == {"method", "max_power", "min_power"}
+    assert normalization["method"] == "minmax_global"
+    assert normalization["max_power"] == {"value": 31.5, "unit": "kW"}
+    assert normalization["min_power"] == {"value": -2.4, "unit": "kW"}
+
+
 def test_schema_value_constraints(small_df, tiny_models):
     p, gmms = tiny_models
     payload = build_psdm_payload_from_models(small_df, p, gmms)
@@ -171,52 +186,3 @@ def test_json_serialization_round_trip(small_df, tiny_models):
     orig_buckets = original_payload["data"]["gmms"]["buckets"]
     recon_buckets = reconstructed_payload["data"]["gmms"]["buckets"]
     assert len(orig_buckets) == len(recon_buckets)
-
-
-@pytest.mark.skipif(
-    True, reason="JSON schema validation skipped - add jsonschema dependency to enable"
-)
-def test_jsonschema_validation(small_df, tiny_models):
-
-    jsonschema = pytest.importorskip("jsonschema")
-
-    p, gmms = tiny_models
-    payload = build_psdm_payload_from_models(small_df, p, gmms)
-
-    schema = {
-        "type": "object",
-        "required": [
-            "schema",
-            "generated_at",
-            "generator",
-            "time_model",
-            "value_model",
-            "parameters",
-            "data",
-        ],
-        "properties": {
-            "schema": {"type": "string", "enum": ["simonaMarkovLoad:psdm:1.0"]},
-            "generated_at": {"type": "string"},
-            "time_model": {
-                "type": "object",
-                "required": ["bucket_count"],
-                "properties": {"bucket_count": {"type": "integer", "enum": [2304]}},
-            },
-            "data": {
-                "type": "object",
-                "required": ["transitions", "gmms"],
-                "properties": {
-                    "transitions": {
-                        "type": "object",
-                        "required": ["shape", "dtype", "encoding", "values"],
-                        "properties": {
-                            "dtype": {"type": "string", "enum": ["float32"]},
-                            "encoding": {"type": "string", "enum": ["nested_lists"]},
-                        },
-                    }
-                },
-            },
-        },
-    }
-
-    jsonschema.validate(payload, schema)

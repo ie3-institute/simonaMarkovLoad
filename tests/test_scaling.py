@@ -52,6 +52,24 @@ def test_discretize_power_states(value, expected_state):
     assert out.loc[0, "state"] == expected_state
 
 
+@pytest.mark.parametrize(
+    "value,expected_state",
+    [
+        ((1 / 10) ** 2, 1),
+        ((5 / 10) ** 2, 5),
+        ((9 / 10) ** 2, 9),
+    ],
+)
+def test_discretize_power_threshold_boundaries(value, expected_state):
+    """Values exactly on a threshold belong to the upper state
+    (searchsorted side="right"). PSDM replicates this assignment, so it
+    must not change silently."""
+    df = pd.DataFrame({"power": [value]})
+    out = discretize_power(df.copy())
+
+    assert out.loc[0, "state"] == expected_state
+
+
 def test_discretize_power_preserves_power_column():
     values = np.linspace(0, 1, 6)
     df = pd.DataFrame({"power": values})
