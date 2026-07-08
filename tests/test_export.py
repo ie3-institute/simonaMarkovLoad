@@ -33,9 +33,8 @@ def test_export_payload_from_models(small_df, tiny_models):
     assert "config" in generator
 
     n_states = CONFIG["model"]["n_states"]
-    laplace_alpha = CONFIG["model"]["laplace_alpha"]
     assert generator["config"]["n_states"] == n_states
-    assert generator["config"]["laplace_alpha"] == laplace_alpha
+    assert set(generator["config"]) == {"n_states"}
 
     time_model = payload["time_model"]
     assert time_model["bucket_count"] == 2304

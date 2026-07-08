@@ -31,6 +31,7 @@ def load_timeseries(
     frames: list[pd.DataFrame] = []
     global_min = math.inf
     global_max = -math.inf
+    dropped_negative_deltas = 0
     for path in csv_files:
         df = pd.read_csv(
             path,
@@ -47,6 +48,11 @@ def load_timeseries(
         )
 
         df["power"] = df["cum_kwh"].diff() * cfg_in["factor"]
+
+        if cfg_in.get("drop_negative_deltas", True):
+            negative_delta_mask = df["power"] < 0
+            dropped_negative_deltas += int(negative_delta_mask.sum())
+            df = df.loc[~negative_delta_mask]
 
         df = df.dropna(subset=["power"]).drop(columns="cum_kwh").reset_index(drop=True)
 
@@ -69,6 +75,7 @@ def load_timeseries(
             "max": global_max,
             "unit": "kW",
         }
+    result.attrs["dropped_negative_deltas"] = dropped_negative_deltas
 
     # Normalize over the concatenated data so the scale matches the global
     # min/max exported to PSDM (per-file scaling would mix incompatible scales).

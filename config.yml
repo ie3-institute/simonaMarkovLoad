@@ -2,8 +2,16 @@ input:
   skiprows: 21
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
+  drop_negative_deltas: true
   factor: 4         # 15-min → kW depends on sampling
 
 model:
   n_states: 10
-  laplace_alpha: 1.0
+
+gmm:
+  n_jobs: -1
+  random_state: 42
+
+output:
+  psdm_json: "out/psdm_model.json"
+  show_plots: true

@@ -13,6 +13,9 @@ data/raw/*
 !data/raw/dummy.csv
 data/processed/*
 !data/processed/dummy.csv
+out/
+src/out/
+psdm_model.json
 
 # Betriebssystem
 Thumbs.db

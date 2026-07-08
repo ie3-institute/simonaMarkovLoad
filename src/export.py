@@ -82,7 +82,6 @@ def build_psdm_payload_from_models(
         Complete PSDM JSON payload dictionary
     """
     n_states = CONFIG["model"]["n_states"]
-    laplace_alpha = CONFIG["model"]["laplace_alpha"]
 
     thresholds = [(k / 10) ** 2 for k in range(1, 10)]
 
@@ -106,7 +105,7 @@ def build_psdm_payload_from_models(
         "generator": {
             "name": "simonaMarkovLoad",
             "version": "git:unknown",
-            "config": {"n_states": n_states, "laplace_alpha": laplace_alpha},
+            "config": {"n_states": n_states},
         },
         "time_model": {
             "bucket_count": 2304,

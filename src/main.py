@@ -136,6 +136,9 @@ def _plot_simulation_diagnostics(
 
 def main() -> None:
     df = load_timeseries(normalize=True, discretize=True)
+    output_config = CONFIG.get("output", {})
+    gmm_config = CONFIG.get("gmm", {})
+    show_plots = bool(output_config.get("show_plots", True))
     power_stats = df.attrs.get("power_stats", {})
     max_power = power_stats.get("max")
     min_power = power_stats.get("min")
@@ -147,10 +150,13 @@ def main() -> None:
     counts = build_transition_counts(df)
     probs = build_transition_matrices(df, counts=counts)
 
-    _plot_first_25_buckets(counts, probs)
+    if show_plots:
+        _plot_first_25_buckets(counts, probs)
 
     gm_kwargs = {
         "value_col": val_col,
+        "n_jobs": int(gmm_config.get("n_jobs", -1)),
+        "random_state": gmm_config.get("random_state", 42),
         "verbose": 1,
         "heartbeat_seconds": 60,
     }
@@ -158,16 +164,16 @@ def main() -> None:
     gmms = fit_gmms(df, **gm_kwargs)
 
     meta = {"records": len(df)}
+    if "dropped_negative_deltas" in df.attrs:
+        meta["dropped_negative_deltas"] = int(df.attrs["dropped_negative_deltas"])
     if "ts" in df.columns:
         meta["time_range"] = {"start": str(df["ts"].min()), "end": str(df["ts"].max())}
     if "source" in CONFIG.get("data", {}):
         meta["source"] = CONFIG["data"]["source"]
 
     try:
-        out_path = Path(
-            CONFIG.get("output", {}).get("psdm_json", "out/psdm_model.json")
-        )
-        pretty = bool(CONFIG.get("output", {}).get("pretty_json", False))
+        out_path = Path(output_config.get("psdm_json", "out/psdm_model.json"))
+        pretty = bool(output_config.get("pretty_json", False))
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -195,7 +201,8 @@ def main() -> None:
         periods=periods,
     )
 
-    _plot_simulation_diagnostics(df, sim, val_col)
+    if show_plots:
+        _plot_simulation_diagnostics(df, sim, val_col)
 
 
 if __name__ == "__main__":

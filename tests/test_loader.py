@@ -98,5 +98,30 @@ def test_load_timeseries_normalizes_globally(tmp_path, monkeypatch):
     pd.testing.assert_series_equal(df["power"], expected_power)
 
 
+def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
+    """Negative cumulative meter deltas are treated as invalid reset/correction rows."""
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+
+    _write_csv(raw_dir / "reset.csv", [1.0, 1.5, 1.0, 1.25])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    loader_module.CONFIG["input"].update(
+        {
+            "timestamp_col": "Zeitstempel",
+            "value_col": "Messwert",
+            "factor": 4.0,
+            "drop_negative_deltas": True,
+        }
+    )
+
+    df = load_timeseries(normalize=False, discretize=False)
+
+    expected_power = pd.Series([2.0, 1.0], name="power", dtype="float32")
+    pd.testing.assert_series_equal(df["power"], expected_power)
+    assert df.attrs["power_stats"] == {"min": 1.0, "max": 2.0, "unit": "kW"}
+    assert df.attrs["dropped_negative_deltas"] == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

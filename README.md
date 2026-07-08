@@ -110,11 +110,19 @@ input:
   skiprows: 21              # Header rows to skip
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
+  drop_negative_deltas: true # Drop invalid meter resets/corrections
   factor: 4                 # Conversion factor (15-min intervals → kW)
 
 model:
   n_states: 10              # Number of load states
-  laplace_alpha: 1.0        # Recorded in export metadata (smoothing not applied; self-loop fallback is used)
+
+gmm:
+  n_jobs: -1                # Parallel workers for GMM fitting
+  random_state: 42          # Reproducible GMM initialisation
+
+output:
+  psdm_json: "out/psdm_model.json"
+  show_plots: true          # Set false for headless training runs
 ```
 
 ### 3. Run the pipeline
@@ -124,6 +132,8 @@ poetry run python -m src.main
 ```
 
 This will:
+
+Negative cumulative meter deltas are dropped by default before normalisation, because they usually indicate meter resets or data corrections.
 
 1. Load and preprocess raw CSV data (kWh → kW, global min/max normalisation, discretisation)
 2. Assign temporal buckets to each observation

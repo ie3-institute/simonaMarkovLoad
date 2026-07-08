@@ -51,7 +51,7 @@ def test_schema_structure_completeness(small_df, tiny_models):
     expected_generator_keys = {"name", "version", "config"}
     assert set(generator.keys()) == expected_generator_keys
 
-    expected_config_keys = {"n_states", "laplace_alpha"}
+    expected_config_keys = {"n_states"}
     assert set(generator["config"].keys()) == expected_config_keys
 
     time_model = payload["time_model"]
