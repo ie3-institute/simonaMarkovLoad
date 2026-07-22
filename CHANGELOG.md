@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added full Markov-model pipeline [#10](https://github.com/ie3-institute/simonaMarkovLoad/issues/10)
 - Added GMM feature to project [#12](https://github.com/ie3-institute/simonaMarkovLoad/issues/12)
 - Added `JSON` export and improve simulation robustness [#27](https://github.com/ie3-institute/simonaMarkovLoad/issues/27)
-- Per-file constant-load triples stored in `constant_loads.yml`, mapped by CSV file stem [#125](https://github.com/ie3-institute/simonaMarkovLoad/issues/125)
+- Per-file constant load triples stored in `constant_loads.yml`, mapped by CSV file stem [#125](https://github.com/ie3-institute/simonaMarkovLoad/issues/125)
 - Optional pooled training: `input.pools: true` trains one model per `data/` subdirectory and exports one PSDM JSON per pool [#127](https://github.com/ie3-institute/simonaMarkovLoad/issues/127)
 - `dropped_missing_values` metadata counter on the loader output
 
