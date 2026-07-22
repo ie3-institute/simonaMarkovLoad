@@ -27,7 +27,9 @@ def load_constant_loads(
     for key, triples in data.items():
         if not isinstance(key, str):
             raise ValueError(f"constant loads key {key!r} must be a string.")
-        if not isinstance(triples, list):
+        if triples is None:
+            triples = []
+        elif not isinstance(triples, list):
             raise ValueError(f"constant loads entry {key!r} must be a list.")
 
         normalized_triples: list[tuple[float, int, int]] = []

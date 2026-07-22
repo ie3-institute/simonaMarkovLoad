@@ -156,7 +156,7 @@ SM_00002:
 ```
 
 The values are stored for consumption by future preprocessing steps. Their
-interpretation is TBD; see `multimeter` `base_variation`.
+interpretation is TBD.
 
 ### 3. Run the pipeline
 

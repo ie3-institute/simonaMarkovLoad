@@ -33,6 +33,13 @@ def test_load_constant_loads_empty_file_returns_empty_mapping(tmp_path: Path):
     assert load_constant_loads(path) == {}
 
 
+def test_load_constant_loads_null_entry_returns_empty_list(tmp_path: Path):
+    path = tmp_path / "constant_loads.yml"
+    path.write_text("SM_00001:\n", encoding="utf-8")
+
+    assert load_constant_loads(path) == {"SM_00001": []}
+
+
 def test_file_stem_without_entry_uses_mapping_default(tmp_path: Path):
     path = tmp_path / "constant_loads.yml"
     path.write_text("SM_00001:\n  - [330, 20, 6]\n", encoding="utf-8")
