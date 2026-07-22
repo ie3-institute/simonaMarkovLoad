@@ -113,6 +113,7 @@ input:
   value_representation: "cumulative_energy"
   interval_minutes: 15      # Required for energy input
   drop_negative_deltas: true # Drop invalid meter resets/corrections
+  pools: false               # Train one model per data/raw subdirectory
 
 model:
   n_states: 10              # Number of load states
@@ -141,6 +142,14 @@ assumes fixed 15-minute intervals, so `interval_minutes` must remain `15`! it
 controls only the energy to power scaling. `drop_negative_deltas` is likewise
 allowed in every mode but is applied only to `cumulative_energy`. When omitted
 for that mode, negative deltas are dropped by default.
+
+#### Pooled training
+
+Enabling `input.pools: true` trains one model per first-level subdirectory of
+`data/raw/`, sequentially. Each pool is written to
+`out/psdm_model_<folder>.json`. Loose CSV files directly in `data/raw/` are
+ignored in pool mode. By default, pooling is disabled and all loose CSV files
+train one model.
 
 #### Per-file constant loads
 

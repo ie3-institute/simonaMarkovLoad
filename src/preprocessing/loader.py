@@ -59,6 +59,9 @@ def _validate_input_config(cfg_in: dict) -> str:
     ):
         raise ValueError("input.drop_negative_deltas must be a boolean.")
 
+    if "pools" in cfg_in and not isinstance(cfg_in["pools"], bool):
+        raise ValueError("input.pools must be a boolean.")
+
     return representation
 
 
@@ -76,6 +79,7 @@ def _convert_to_power(df: pd.DataFrame, cfg_in: dict, representation: str) -> No
 
 def load_timeseries(
     *,
+    data_dir: Path | None = None,
     value_dtype: str = "float32",
     normalize: bool = False,
     discretize: bool = False,
@@ -84,10 +88,12 @@ def load_timeseries(
     cfg_in = CONFIG["input"]
     representation = _validate_input_config(cfg_in)
 
-    # Collect all .csv files under data/raw
-    csv_files: list[Path] = sorted(RAW_DATA_DIR.glob("*.csv"))
+    input_dir = RAW_DATA_DIR if data_dir is None else data_dir
+
+    # Collect all .csv files in the input directory
+    csv_files: list[Path] = sorted(input_dir.glob("*.csv"))
     if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {RAW_DATA_DIR}.")
+        raise FileNotFoundError(f"No CSV files found in {input_dir}.")
 
     # Read columns (ts, value) from each file
     frames: list[pd.DataFrame] = []

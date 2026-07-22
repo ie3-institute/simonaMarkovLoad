@@ -11,7 +11,7 @@ from src.markov.buckets import assign_buckets, bucket_id
 from src.markov.gmm import fit_gmms, sample_value
 from src.markov.transition_counts import build_transition_counts
 from src.markov.transitions import build_transition_matrices
-from src.preprocessing.loader import load_timeseries
+from src.preprocessing.loader import RAW_DATA_DIR, load_timeseries
 
 SIM_DAYS = 10
 PER_DAY = 96
@@ -134,8 +134,22 @@ def _plot_simulation_diagnostics(
     plt.show()
 
 
-def main() -> None:
-    df = load_timeseries(normalize=True, discretize=True)
+def _discover_pools(raw_dir: Path) -> tuple[list[Path], int]:
+    pools = sorted(path for path in raw_dir.iterdir() if path.is_dir())
+    loose_csv_count = sum(1 for path in raw_dir.glob("*.csv") if path.is_file())
+    return pools, loose_csv_count
+
+
+def _pool_output_path(base: Path, pool_name: str) -> Path:
+    return base.with_name(f"{base.stem}_{pool_name}{base.suffix}")
+
+
+def _run_pipeline(data_dir: Path | None, out_path: Path) -> None:
+    df = load_timeseries(
+        data_dir=data_dir,
+        normalize=True,
+        discretize=True,
+    )
     output_config = CONFIG.get("output", {})
     gmm_config = CONFIG.get("gmm", {})
     show_plots = bool(output_config.get("show_plots", True))
@@ -172,7 +186,6 @@ def main() -> None:
         meta["source"] = CONFIG["data"]["source"]
 
     try:
-        out_path = Path(output_config.get("psdm_json", "out/psdm_model.json"))
         pretty = bool(output_config.get("pretty_json", False))
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -203,6 +216,28 @@ def main() -> None:
 
     if show_plots:
         _plot_simulation_diagnostics(df, sim, val_col)
+
+
+def main() -> None:
+    input_config = CONFIG.get("input", {})
+    output_config = CONFIG.get("output", {})
+    out_path = Path(output_config.get("psdm_json", "out/psdm_model.json"))
+
+    if not input_config.get("pools", False):
+        _run_pipeline(None, out_path)
+        return
+
+    pools, loose_csv_count = _discover_pools(RAW_DATA_DIR)
+    if not pools:
+        raise ValueError(
+            f"input.pools is enabled, but no pool subdirectories were found in "
+            f"{RAW_DATA_DIR}."
+        )
+    if loose_csv_count:
+        print(f"[pools] Ignoring {loose_csv_count} loose CSV files in {RAW_DATA_DIR}.")
+
+    for pool_dir in pools:
+        _run_pipeline(pool_dir, _pool_output_path(out_path, pool_dir.name))
 
 
 if __name__ == "__main__":

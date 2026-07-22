@@ -99,6 +99,22 @@ def test_load_timeseries_normalizes_globally(tmp_path, monkeypatch):
     pd.testing.assert_series_equal(df["power"], expected_power)
 
 
+def test_load_timeseries_uses_explicit_data_dir(tmp_path, monkeypatch):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    _write_csv(first_dir / "first_source.csv", [0.0, 0.25])
+    _write_csv(second_dir / "second_source.csv", [0.0, 0.5])
+    _configure_input(monkeypatch)
+
+    first = load_timeseries(data_dir=first_dir)
+    second = load_timeseries(data_dir=second_dir)
+
+    assert set(first["source"]) == {"first_source"}
+    assert set(second["source"]) == {"second_source"}
+
+
 def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
     """Negative cumulative meter deltas are treated as invalid reset/correction rows."""
     raw_dir = tmp_path / "data" / "raw"
@@ -225,6 +241,7 @@ def test_interval_minutes_must_be_positive_when_configured(
     [
         ({"value_representation": "voltage"}, "value_representation must be one"),
         ({"factor": 4.0}, "input.factor is no longer supported"),
+        ({"pools": "true"}, "input.pools must be a boolean"),
     ],
 )
 def test_load_timeseries_rejects_invalid_or_legacy_config(
