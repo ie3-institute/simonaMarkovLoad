@@ -1,9 +1,11 @@
 import math
 from pathlib import Path
 
+import matplotlib
 import pandas as pd
 
 from src.config import CONFIG
+from .constant_loads import load_constant_loads
 
 from ..markov.buckets import assign_buckets
 from .scaling import discretize_power, normalize_power
@@ -84,8 +86,9 @@ def load_timeseries(
     normalize: bool = False,
     discretize: bool = False,
     eps: float = 1e-12,
-) -> pd.DataFrame:
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     cfg_in = CONFIG["input"]
+    cfg_splitting = CONFIG["splitting"]
     representation = _validate_input_config(cfg_in)
 
     input_dir = DATA_DIR if data_dir is None else data_dir
@@ -95,12 +98,8 @@ def load_timeseries(
     if not csv_files:
         raise FileNotFoundError(f"No CSV files found in {input_dir}.")
 
-    # Read columns (ts, value) from each file
-    frames: list[pd.DataFrame] = []
-    global_min = math.inf
-    global_max = -math.inf
-    dropped_negative_deltas = 0
-    dropped_missing_values = 0
+    path_to_frame: dict[str, pd.DataFrame] = {}
+
     for path in csv_files:
         df = pd.read_csv(
             path,
@@ -115,6 +114,92 @@ def load_timeseries(
                 cfg_in["value_col"]: "input_value",
             }
         )
+
+        path_to_frame[path.stem] = df
+
+    if cfg_splitting is not None:
+        value_column = "input_value"
+        constants = load_constant_loads()
+
+        frames: dict[str, dict[str, pd.DataFrame]] = {}
+        frames["base"] = {}
+        frames["variation"] = {}
+
+        for path, df in path_to_frame.items():
+            if path in constants:
+                current_constants = constants[path]
+
+                # remove constant loads
+                if constants is not None:
+                    for c in current_constants:
+                        (threshold, start_hour, end_hour) = c
+                        mask = ((df.index.hour >= start_hour) | (df.index.hour < end_hour)) & (df[value_column] > threshold)
+
+                        const_df = _copy_and_drop(df)
+
+                        const_df[value_column] = 0.0
+                        df.loc[mask, value_column] = threshold
+
+                        df[value_column] = df[value_column] - const_df[value_column]
+
+                        name = f"{threshold}_{start_hour}_{end_hour}"
+                        if name not in frames:
+                            frames[name] = {}
+
+                        frames[name][path] = const_df
+
+            if cfg_splitting["value_representation"] == "absolute":
+                sm = cfg_splitting["value"]
+            else:
+                sm = df.nsmallest(int(len(df) * cfg_splitting["value"]), value_column)
+
+            base_df = _copy_and_drop(df)
+            value_mask = df[value_column] > sm
+            base_df[value_column] = df[value_column].mask(value_mask)
+            base_df[value_column] = base_df[value_column].fillna(sm)
+            base_df.set_index("timestamp")
+
+            variation_df = _copy_and_drop(df)
+            variation_df[value_column] = df[value_column] - base_df[value_column]
+            variation_df.set_index("timestamp")
+
+            frames["base"][path] = base_df
+            frames["variation"][path] = variation_df
+
+        res: dict[str, pd.DataFrame] = {}
+
+        for name, values in frames.items():
+            res[name] = _process_timeseries(values, cfg_in, representation, normalize, discretize, eps)
+
+        return res
+
+    else:
+        return _process_timeseries(
+            path_to_frame,
+            cfg_in,
+            representation,
+            normalize,
+            discretize,
+            eps
+        )
+
+
+def _process_timeseries(
+    dfs: dict[str, pd.DataFrame],
+    cfg_in: dict,
+    representation: str,
+    normalize: bool = False,
+    discretize: bool = False,
+    eps: float = 1e-12,
+) -> pd.DataFrame:
+    # Read columns (ts, value) from each file
+    frames: list[pd.DataFrame] = []
+    global_min = math.inf
+    global_max = -math.inf
+    dropped_negative_deltas = 0
+    dropped_missing_values = 0
+
+    for path, df in dfs.items():
         dropped_missing_values += int(df["input_value"].isna().sum())
 
         _convert_to_power(df, cfg_in, representation)
@@ -139,7 +224,7 @@ def load_timeseries(
             global_max = max(global_max, power_max)
 
         df = assign_buckets(df, inplace=True)
-        df["source"] = path.stem
+        df["source"] = path
 
         frames.append(df)
 
@@ -163,3 +248,9 @@ def load_timeseries(
         result = discretize_power(result, col="power", state_col="state")
 
     return result
+
+
+def _copy_and_drop(df: pd.DataFrame) -> pd.DataFrame:
+    return df.copy(deep=True).drop(columns=["input_value"])
+
+

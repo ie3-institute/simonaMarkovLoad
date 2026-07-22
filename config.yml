@@ -1,11 +1,16 @@
 input:
-  skiprows: 21
-  timestamp_col: "Zeitstempel"
-  value_col: "Messwert"
-  value_representation: "cumulative_energy"
+  skiprows: 0
+  timestamp_col: "time"
+  value_col: "value [kWh]"
+  value_representation: "interval_energy"
   interval_minutes: 15
   drop_negative_deltas: true
   pools: false      # true: train one model per subdirectory of data
+
+splitting:
+  value_representation: "absolute" # else percent is possible
+  value: 80
+  remove_constants: true
 
 model:
   n_states: 10
