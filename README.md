@@ -42,7 +42,7 @@ simonaMarkovLoad/
 │   └── preprocessing/
 │       ├── loader.py           # CSV ingestion and power computation
 │       └── scaling.py          # Normalisation and discretisation
-├── tests/                      # pytest test suite (9 modules)
+├── tests/                      # pytest test suite
 ├── scripts/
 │   └── setup_env.py            # Pre-commit hook installer
 ├── data/                       # Input CSV files or pool subdirectories
