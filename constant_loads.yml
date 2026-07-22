@@ -1,0 +1,5 @@
+# Maps input file stems (CSV names in data/raw without extension) to a list
+# of [value, int, int] constant load triples, e.g.:
+#
+# SM_00001:
+#   - [330.0, 20, 6]
