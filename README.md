@@ -268,14 +268,16 @@ Pre-commit hooks enforce:
 
 ## 📦 Dependencies
 
-| Package | Version | Purpose |
-|---|---|---|
-| numpy | >=2.5.0,<3 | Numerical arrays |
-| pandas | >=2.2.3,<3 | Data manipulation |
-| scikit-learn | >=1.9.0,<2 | Gaussian Mixture Models |
-| joblib | >=1.4.2,<2 | Parallel GMM fitting |
-| matplotlib | >=3.11.0,<4 | Visualisation |
-| tqdm | >=4.68.3,<5 | Progress bars |
+| Package | Purpose |
+|---|---|
+| numpy | Numerical arrays |
+| pandas | Data manipulation |
+| scikit-learn | Gaussian Mixture Models |
+| joblib | Parallel GMM fitting |
+| matplotlib | Visualisation |
+| tqdm | Progress bars |
+
+Version constraints are maintained in `pyproject.toml` (locked in `uv.lock`).
 
 ---
 
