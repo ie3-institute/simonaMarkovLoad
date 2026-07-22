@@ -142,6 +142,22 @@ controls only the energy to power scaling. `drop_negative_deltas` is likewise
 allowed in every mode but is applied only to `cumulative_energy`. When omitted
 for that mode, negative deltas are dropped by default.
 
+#### Per-file constant loads
+
+Optional constant-load triples can be stored by CSV file stem in
+`constant_loads.yml` at the repository root:
+
+```yaml
+SM_00001:
+  - [330.0, 20, 6]
+SM_00002:
+  - [150, 24, 8]
+  - [80.0, 12, 2]
+```
+
+The values are stored for consumption by future preprocessing steps. Their
+interpretation is TBD.
+
 ### 3. Run the pipeline
 
 ```bash
