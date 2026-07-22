@@ -175,7 +175,7 @@ uv run python -m src.main
 
 This will:
 
-Negative cumulative meter deltas are dropped by default before normalisation, because they usually indicate meter resets or data corrections.
+Negative cumulative meter deltas are dropped by default before normalisation.
 
 1. Load and preprocess raw CSV data (input values → kW, global min/max normalisation, discretisation)
 2. Assign temporal buckets to each observation
