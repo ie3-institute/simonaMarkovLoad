@@ -1,6 +1,6 @@
 # Reviewers for Dependabot PRs (Dependencies)
 pyproject.toml  @sebastian-peter @PhilippSchmelter
-poetry.lock  @sebastian-peter @PhilippSchmelter
+uv.lock  @sebastian-peter @PhilippSchmelter
 
 # Sourcecode Reviewers
 /src @sebastian-peter @PhilippSchmelter

@@ -58,11 +58,11 @@ simonaMarkovLoad/
 ### Prerequisites
 
 - **Python** >= 3.13
-- **Poetry** installed:
+- **uv** installed:
   ```bash
-  pip install poetry
+  pip install uv
   # or, preferably, via pipx:
-  pipx install poetry
+  pipx install uv
   ```
 
 ### Clone and install
@@ -72,16 +72,16 @@ git clone https://github.com/ie3-institute/simonaMarkovLoad
 cd simonaMarkovLoad
 
 # Install all dependencies (including dev dependencies)
-poetry install
+uv sync
 
 # Install and activate pre-commit hooks
-poetry run setup
+uv run setup
 ```
 
 To run the hooks manually:
 
 ```bash
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ---
@@ -170,7 +170,7 @@ interpretation is TBD.
 ### 3. Run the pipeline
 
 ```bash
-poetry run python -m src.main
+uv run python -m src.main
 ```
 
 This will:
@@ -253,7 +253,7 @@ Within each (bucket, state) pair a GMM models the distribution of normalised pow
 ### Running tests
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 ### Code quality
