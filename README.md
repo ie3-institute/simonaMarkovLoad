@@ -137,7 +137,7 @@ output:
 `interval_minutes` is required for both energy representations and must be
 positive. In `power` mode it is not used in the calculation, but when specified
 it is still validated as a positive, finite value. The temporal model currently
-assumes fixed 15-minute intervals, so `interval_minutes` must remain `15`! it
+assumes fixed 15-minute intervals, so `interval_minutes` must remain `15`; it
 controls only the energy to power scaling. `drop_negative_deltas` is likewise
 allowed in every mode but is applied only to `cumulative_energy`. When omitted
 for that mode, negative deltas are dropped by default.
