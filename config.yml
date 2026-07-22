@@ -2,8 +2,9 @@ input:
   skiprows: 21
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
+  value_representation: "cumulative_energy"
+  interval_minutes: 15
   drop_negative_deltas: true
-  factor: 4         # 15-min → kW depends on sampling
 
 model:
   n_states: 10

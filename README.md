@@ -14,7 +14,7 @@ The trained model is exported in the **PSDM JSON format** (`simonaMarkovLoad:psd
 
 ## ⚙️ Features
 
-- Conversion of cumulative 15-minute kWh readings to instantaneous power (kW) via differencing
+- Semantic handling of cumulative energy, interval energy, and power input values
 - **Global min/max normalisation** across all input files (`minmax_global`); the kW scale is exported with the model so consumers can de-normalise
 - Discretisation of continuous power values into **10 states** using quadratic thresholds
 - **2,304 temporal buckets** based on month, weekday/weekend flag, and quarter-hour slot
@@ -97,7 +97,7 @@ Place your raw CSV files in `data/raw/`. The CSV format is expected to have:
 | Column | Description |
 |---|---|
 | `Zeitstempel` | Timestamp (configurable) |
-| `Messwert` | Cumulative energy reading in kWh (configurable) |
+| `Messwert` | Energy in kWh or power in kW (configurable) |
 
 The first 21 rows are skipped by default (configurable via `config.yml`).
 
@@ -110,8 +110,9 @@ input:
   skiprows: 21              # Header rows to skip
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
+  value_representation: "cumulative_energy"
+  interval_minutes: 15      # Required for energy input
   drop_negative_deltas: true # Drop invalid meter resets/corrections
-  factor: 4                 # Conversion factor (15-min intervals → kW)
 
 model:
   n_states: 10              # Number of load states
@@ -125,6 +126,22 @@ output:
   show_plots: true          # Set false for headless training runs
 ```
 
+`value_representation` defines how the configured value column is interpreted:
+
+| Value | Input | Conversion to kW |
+|---|---|---|
+| `cumulative_energy` | Cumulative energy meter reading in kWh | Difference consecutive readings, then divide by the interval duration in hours |
+| `interval_energy` | Energy consumed during each interval in kWh | Divide each value by the interval duration in hours |
+| `power` | Power in kW | Use each value directly |
+
+`interval_minutes` is required for both energy representations and must be
+positive. In `power` mode it is not used in the calculation, but when specified
+it is still validated as a positive, finite value. The temporal model currently
+assumes fixed 15-minute intervals, so `interval_minutes` must remain `15`! it
+controls only the energy to power scaling. `drop_negative_deltas` is likewise
+allowed in every mode but is applied only to `cumulative_energy`. When omitted
+for that mode, negative deltas are dropped by default.
+
 ### 3. Run the pipeline
 
 ```bash
@@ -135,7 +152,7 @@ This will:
 
 Negative cumulative meter deltas are dropped by default before normalisation, because they usually indicate meter resets or data corrections.
 
-1. Load and preprocess raw CSV data (kWh → kW, global min/max normalisation, discretisation)
+1. Load and preprocess raw CSV data (input values → kW, global min/max normalisation, discretisation)
 2. Assign temporal buckets to each observation
 3. Build Markov transition matrices (2,304 × 10 × 10)
 4. Fit GMMs for each (bucket, state) pair in parallel

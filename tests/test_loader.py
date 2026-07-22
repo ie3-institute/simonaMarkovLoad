@@ -8,6 +8,19 @@ from src.markov.buckets import bucket_id
 from src.preprocessing.loader import load_timeseries
 
 
+def _configure_input(monkeypatch, **overrides) -> None:
+    config = {
+        "skiprows": 21,
+        "timestamp_col": "Zeitstempel",
+        "value_col": "Messwert",
+        "value_representation": "cumulative_energy",
+        "interval_minutes": 15,
+        "drop_negative_deltas": True,
+    }
+    config.update(overrides)
+    monkeypatch.setitem(loader_module.CONFIG, "input", config)
+
+
 def _create_sample_csv(path: Path) -> None:
     """Write 3 kWh readings; first diff will be NaN and dropped."""
     with path.open("w", encoding="utf-8") as f:
@@ -27,13 +40,7 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     _create_sample_csv(csv_file)
 
     monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
-    loader_module.CONFIG["input"].update(
-        {
-            "timestamp_col": "Zeitstempel",
-            "value_col": "Messwert",
-            "factor": 4.0,
-        }
-    )
+    _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=True, discretize=True)
 
@@ -61,7 +68,7 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     assert stats == {"min": 2.0, "max": 2.0, "unit": "kW"}
 
 
-def _write_csv(path: Path, cum_kwh: list[float]) -> None:
+def _write_csv(path: Path, cum_kwh: list[float | str]) -> None:
     with path.open("w", encoding="utf-8") as f:
         for _ in range(21):
             f.write("metadata line\n")
@@ -80,13 +87,7 @@ def test_load_timeseries_normalizes_globally(tmp_path, monkeypatch):
     _write_csv(raw_dir / "b.csv", [0.0, 0.5, 2.0])
 
     monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
-    loader_module.CONFIG["input"].update(
-        {
-            "timestamp_col": "Zeitstempel",
-            "value_col": "Messwert",
-            "factor": 4.0,
-        }
-    )
+    _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=True, discretize=True)
 
@@ -106,14 +107,7 @@ def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
     _write_csv(raw_dir / "reset.csv", [1.0, 1.5, 1.0, 1.25])
 
     monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
-    loader_module.CONFIG["input"].update(
-        {
-            "timestamp_col": "Zeitstempel",
-            "value_col": "Messwert",
-            "factor": 4.0,
-            "drop_negative_deltas": True,
-        }
-    )
+    _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=False, discretize=False)
 
@@ -121,6 +115,186 @@ def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
     pd.testing.assert_series_equal(df["power"], expected_power)
     assert df.attrs["power_stats"] == {"min": 1.0, "max": 2.0, "unit": "kW"}
     assert df.attrs["dropped_negative_deltas"] == 1
+
+
+@pytest.mark.parametrize(
+    ("representation", "values", "expected_power"),
+    [
+        ("interval_energy", [0.25, -0.5, 1.0], [1.0, -2.0, 4.0]),
+        ("power", [0.25, -0.5, 1.0], [0.25, -0.5, 1.0]),
+    ],
+)
+def test_load_timeseries_value_representations(
+    tmp_path, monkeypatch, representation, values, expected_power
+):
+    """Interval energy is converted to kW while power is used directly."""
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", values)
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    _configure_input(monkeypatch, value_representation=representation)
+
+    df = load_timeseries(normalize=False, discretize=False)
+
+    expected = pd.Series(expected_power, name="power", dtype="float32")
+    pd.testing.assert_series_equal(df["power"], expected)
+    assert len(df) == len(values)
+    assert df.attrs["dropped_negative_deltas"] == 0
+    assert df.attrs["dropped_missing_values"] == 0
+
+
+@pytest.mark.parametrize(
+    ("representation", "expected_power"),
+    [
+        ("interval_energy", [1.0, 4.0]),
+        ("power", [0.25, 1.0]),
+    ],
+)
+def test_load_timeseries_counts_missing_input_values(
+    tmp_path, monkeypatch, representation, expected_power
+):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [0.25, "", 1.0])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    _configure_input(monkeypatch, value_representation=representation)
+
+    df = load_timeseries(normalize=False, discretize=False)
+
+    expected = pd.Series(expected_power, name="power", dtype="float32")
+    pd.testing.assert_series_equal(df["power"], expected)
+    assert len(df) == 2
+    assert df.attrs["dropped_missing_values"] == 1
+
+
+@pytest.mark.parametrize("representation", ["cumulative_energy", "interval_energy"])
+def test_energy_input_requires_interval_minutes(tmp_path, monkeypatch, representation):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setitem(
+        loader_module.CONFIG,
+        "input",
+        {
+            "skiprows": 21,
+            "timestamp_col": "Zeitstempel",
+            "value_col": "Messwert",
+            "value_representation": representation,
+        },
+    )
+
+    with pytest.raises(ValueError, match="interval_minutes must be a positive"):
+        load_timeseries()
+
+
+@pytest.mark.parametrize(
+    ("representation", "interval_minutes"),
+    [
+        ("cumulative_energy", 0),
+        ("interval_energy", -15),
+        ("cumulative_energy", True),
+        ("interval_energy", "15"),
+        ("power", 0),
+        ("power", float("inf")),
+    ],
+)
+def test_interval_minutes_must_be_positive_when_configured(
+    tmp_path, monkeypatch, representation, interval_minutes
+):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    _configure_input(
+        monkeypatch,
+        value_representation=representation,
+        interval_minutes=interval_minutes,
+    )
+
+    with pytest.raises(ValueError, match="interval_minutes must be a positive"):
+        load_timeseries()
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"value_representation": "voltage"}, "value_representation must be one"),
+        ({"factor": 4.0}, "input.factor is no longer supported"),
+    ],
+)
+def test_load_timeseries_rejects_invalid_or_legacy_config(
+    tmp_path, monkeypatch, overrides, message
+):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    _configure_input(monkeypatch, **overrides)
+
+    with pytest.raises(ValueError, match=message):
+        load_timeseries()
+
+
+@pytest.mark.parametrize(
+    "representation", ["cumulative_energy", "interval_energy", "power"]
+)
+def test_drop_negative_deltas_must_be_boolean(tmp_path, monkeypatch, representation):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [1.0, -1.0])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    _configure_input(
+        monkeypatch,
+        value_representation=representation,
+        drop_negative_deltas="true",
+    )
+
+    with pytest.raises(ValueError, match="drop_negative_deltas must be a boolean"):
+        load_timeseries()
+
+
+@pytest.mark.parametrize(
+    ("drop_negative_deltas", "expected_power", "dropped_count"),
+    [
+        (None, [2.0, 1.0], 1),
+        (False, [2.0, -2.0, 1.0], 0),
+    ],
+)
+def test_cumulative_negative_delta_policy(
+    tmp_path,
+    monkeypatch,
+    drop_negative_deltas,
+    expected_power,
+    dropped_count,
+):
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+    _write_csv(raw_dir / "sample.csv", [1.0, 1.5, 1.0, 1.25])
+
+    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    config = {
+        "skiprows": 21,
+        "timestamp_col": "Zeitstempel",
+        "value_col": "Messwert",
+        "value_representation": "cumulative_energy",
+        "interval_minutes": 15,
+    }
+    if drop_negative_deltas is not None:
+        config["drop_negative_deltas"] = drop_negative_deltas
+    monkeypatch.setitem(loader_module.CONFIG, "input", config)
+
+    df = load_timeseries(normalize=False, discretize=False)
+
+    expected = pd.Series(expected_power, name="power", dtype="float32")
+    pd.testing.assert_series_equal(df["power"], expected)
+    assert df.attrs["dropped_negative_deltas"] == dropped_count
 
 
 if __name__ == "__main__":
