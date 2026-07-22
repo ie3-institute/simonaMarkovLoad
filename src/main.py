@@ -11,7 +11,7 @@ from src.markov.buckets import assign_buckets, bucket_id
 from src.markov.gmm import fit_gmms, sample_value
 from src.markov.transition_counts import build_transition_counts
 from src.markov.transitions import build_transition_matrices
-from src.preprocessing.loader import load_timeseries
+from src.preprocessing.loader import DATA_DIR, load_timeseries
 
 SIM_DAYS = 10
 PER_DAY = 96
@@ -134,8 +134,35 @@ def _plot_simulation_diagnostics(
     plt.show()
 
 
-def main() -> None:
-    df = load_timeseries(normalize=True, discretize=True)
+def _discover_pools(data_root: Path) -> tuple[list[Path], int]:
+    pools = sorted(path for path in data_root.iterdir() if path.is_dir())
+    loose_csv_count = sum(1 for path in data_root.glob("*.csv") if path.is_file())
+    return pools, loose_csv_count
+
+
+def _resolve_single_run_dir(data_root: Path) -> Path:
+    subdirectories, loose_csv_count = _discover_pools(data_root)
+    if not subdirectories:
+        return data_root
+    if loose_csv_count == 0 and len(subdirectories) == 1:
+        return subdirectories[0]
+    raise ValueError(
+        f"Data layout in {data_root} contains multiple subdirectories or mixes "
+        "loose CSV files with subdirectories. Set input.pools: true to train one "
+        "model per folder, or consolidate the CSV files into one place."
+    )
+
+
+def _pool_output_path(base: Path, pool_name: str) -> Path:
+    return base.with_name(f"{base.stem}_{pool_name}{base.suffix}")
+
+
+def _run_pipeline(data_dir: Path | None, out_path: Path) -> None:
+    df = load_timeseries(
+        data_dir=data_dir,
+        normalize=True,
+        discretize=True,
+    )
     output_config = CONFIG.get("output", {})
     gmm_config = CONFIG.get("gmm", {})
     show_plots = bool(output_config.get("show_plots", True))
@@ -172,7 +199,6 @@ def main() -> None:
         meta["source"] = CONFIG["data"]["source"]
 
     try:
-        out_path = Path(output_config.get("psdm_json", "out/psdm_model.json"))
         pretty = bool(output_config.get("pretty_json", False))
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -203,6 +229,28 @@ def main() -> None:
 
     if show_plots:
         _plot_simulation_diagnostics(df, sim, val_col)
+
+
+def main() -> None:
+    input_config = CONFIG.get("input", {})
+    output_config = CONFIG.get("output", {})
+    out_path = Path(output_config.get("psdm_json", "out/psdm_model.json"))
+
+    if not input_config.get("pools", False):
+        _run_pipeline(_resolve_single_run_dir(DATA_DIR), out_path)
+        return
+
+    pools, loose_csv_count = _discover_pools(DATA_DIR)
+    if not pools:
+        raise ValueError(
+            f"input.pools is enabled, but no pool subdirectories were found in "
+            f"{DATA_DIR}."
+        )
+    if loose_csv_count:
+        print(f"[pools] Ignoring {loose_csv_count} loose CSV files in {DATA_DIR}.")
+
+    for pool_dir in pools:
+        _run_pipeline(pool_dir, _pool_output_path(out_path, pool_dir.name))
 
 
 if __name__ == "__main__":

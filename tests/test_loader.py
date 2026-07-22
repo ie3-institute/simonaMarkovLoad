@@ -39,7 +39,7 @@ def test_load_timeseries_full(tmp_path, monkeypatch):
     csv_file = raw_dir / "sample.csv"
     _create_sample_csv(csv_file)
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=True, discretize=True)
@@ -86,7 +86,7 @@ def test_load_timeseries_normalizes_globally(tmp_path, monkeypatch):
     _write_csv(raw_dir / "a.csv", [0.0, 0.25, 0.75])
     _write_csv(raw_dir / "b.csv", [0.0, 0.5, 2.0])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=True, discretize=True)
@@ -99,6 +99,22 @@ def test_load_timeseries_normalizes_globally(tmp_path, monkeypatch):
     pd.testing.assert_series_equal(df["power"], expected_power)
 
 
+def test_load_timeseries_uses_explicit_data_dir(tmp_path, monkeypatch):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    _write_csv(first_dir / "first_source.csv", [0.0, 0.25])
+    _write_csv(second_dir / "second_source.csv", [0.0, 0.5])
+    _configure_input(monkeypatch)
+
+    first = load_timeseries(data_dir=first_dir)
+    second = load_timeseries(data_dir=second_dir)
+
+    assert set(first["source"]) == {"first_source"}
+    assert set(second["source"]) == {"second_source"}
+
+
 def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
     """Negative cumulative meter deltas are treated as invalid reset/correction rows."""
     raw_dir = tmp_path / "data" / "raw"
@@ -106,7 +122,7 @@ def test_load_timeseries_drops_negative_deltas(tmp_path, monkeypatch):
 
     _write_csv(raw_dir / "reset.csv", [1.0, 1.5, 1.0, 1.25])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch)
 
     df = load_timeseries(normalize=False, discretize=False)
@@ -132,7 +148,7 @@ def test_load_timeseries_value_representations(
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", values)
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch, value_representation=representation)
 
     df = load_timeseries(normalize=False, discretize=False)
@@ -158,7 +174,7 @@ def test_load_timeseries_counts_missing_input_values(
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [0.25, "", 1.0])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch, value_representation=representation)
 
     df = load_timeseries(normalize=False, discretize=False)
@@ -175,7 +191,7 @@ def test_energy_input_requires_interval_minutes(tmp_path, monkeypatch, represent
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     monkeypatch.setitem(
         loader_module.CONFIG,
         "input",
@@ -209,7 +225,7 @@ def test_interval_minutes_must_be_positive_when_configured(
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(
         monkeypatch,
         value_representation=representation,
@@ -225,6 +241,7 @@ def test_interval_minutes_must_be_positive_when_configured(
     [
         ({"value_representation": "voltage"}, "value_representation must be one"),
         ({"factor": 4.0}, "input.factor is no longer supported"),
+        ({"pools": "true"}, "input.pools must be a boolean"),
     ],
 )
 def test_load_timeseries_rejects_invalid_or_legacy_config(
@@ -234,7 +251,7 @@ def test_load_timeseries_rejects_invalid_or_legacy_config(
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [0.0, 0.25])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(monkeypatch, **overrides)
 
     with pytest.raises(ValueError, match=message):
@@ -249,7 +266,7 @@ def test_drop_negative_deltas_must_be_boolean(tmp_path, monkeypatch, representat
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [1.0, -1.0])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     _configure_input(
         monkeypatch,
         value_representation=representation,
@@ -278,7 +295,7 @@ def test_cumulative_negative_delta_policy(
     raw_dir.mkdir(parents=True)
     _write_csv(raw_dir / "sample.csv", [1.0, 1.5, 1.0, 1.25])
 
-    monkeypatch.setattr(loader_module, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(loader_module, "DATA_DIR", raw_dir)
     config = {
         "skiprows": 21,
         "timestamp_col": "Zeitstempel",

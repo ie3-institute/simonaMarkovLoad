@@ -42,12 +42,10 @@ simonaMarkovLoad/
 │   └── preprocessing/
 │       ├── loader.py           # CSV ingestion and power computation
 │       └── scaling.py          # Normalisation and discretisation
-├── tests/                      # pytest test suite (9 modules)
+├── tests/                      # pytest test suite
 ├── scripts/
 │   └── setup_env.py            # Pre-commit hook installer
-├── data/
-│   ├── raw/                    # Input CSV files (place your data here)
-│   └── processed/
+├── data/                       # Input CSV files or pool subdirectories
 ├── out/                        # Model output (psdm_model.json)
 ├── config.yml                  # Configuration
 └── pyproject.toml
@@ -92,7 +90,8 @@ poetry run pre-commit run --all-files
 
 ### 1. Prepare input data
 
-Place your raw CSV files in `data/raw/`. The CSV format is expected to have:
+Place your raw CSV files in `data/` (either loose or inside a single
+subdirectory). The CSV format is expected to have:
 
 | Column | Description |
 |---|---|
@@ -113,6 +112,7 @@ input:
   value_representation: "cumulative_energy"
   interval_minutes: 15      # Required for energy input
   drop_negative_deltas: true # Drop invalid meter resets/corrections
+  pools: false               # Train one model per data subdirectory
 
 model:
   n_states: 10              # Number of load states
@@ -141,6 +141,15 @@ assumes fixed 15-minute intervals, so `interval_minutes` must remain `15`! it
 controls only the energy to power scaling. `drop_negative_deltas` is likewise
 allowed in every mode but is applied only to `cumulative_energy`. When omitted
 for that mode, negative deltas are dropped by default.
+
+#### Pooled training
+
+Enabling `input.pools: true` trains one model per first-level subdirectory of
+`data/`, sequentially. Each pool is written to `out/psdm_model_<folder>.json`.
+Loose CSV files directly in `data/` are ignored in pool mode. By default,
+pooling is disabled and one model is trained from loose CSV files or the CSVs
+in exactly one subdirectory. Multiple subdirectories with pooling disabled are
+rejected.
 
 #### Per-file constant loads
 

@@ -9,10 +9,8 @@ __pycache__/
 .vscode/
 
 # Data
-data/raw/*
-!data/raw/dummy.csv
-data/processed/*
-!data/processed/dummy.csv
+data/*
+!data/.gitkeep
 out/
 src/out/
 psdm_model.json
