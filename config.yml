@@ -5,7 +5,7 @@ input:
   value_representation: "cumulative_energy"
   interval_minutes: 15
   drop_negative_deltas: true
-  pools: false      # true: train one model per subdirectory of data/raw
+  pools: false      # true: train one model per subdirectory of data
 
 model:
   n_states: 10

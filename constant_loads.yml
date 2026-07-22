@@ -1,4 +1,4 @@
-# Maps input file stems (CSV names in data/raw without extension) to a list
+# Maps input file stems (CSV names in data without extension) to a list
 # of [value, int, int] constant load triples, e.g.:
 #
 # SM_00001:

@@ -8,11 +8,11 @@ from src.config import CONFIG
 from ..markov.buckets import assign_buckets
 from .scaling import discretize_power, normalize_power
 
-RAW_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 VALUE_REPRESENTATIONS = {"cumulative_energy", "interval_energy", "power"}
 
-__all__ = ["load_timeseries", "RAW_DATA_DIR"]
+__all__ = ["load_timeseries", "DATA_DIR"]
 
 
 def _validate_input_config(cfg_in: dict) -> str:
@@ -88,7 +88,7 @@ def load_timeseries(
     cfg_in = CONFIG["input"]
     representation = _validate_input_config(cfg_in)
 
-    input_dir = RAW_DATA_DIR if data_dir is None else data_dir
+    input_dir = DATA_DIR if data_dir is None else data_dir
 
     # Collect all .csv files in the input directory
     csv_files: list[Path] = sorted(input_dir.glob("*.csv"))
