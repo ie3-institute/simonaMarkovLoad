@@ -30,7 +30,7 @@ build-backend = "uv_build"
 dev = [
     "black>=26.5.1,<27",
     "isort>=8.0.1,<9",
-    "ruff>=0.15.22,<0.16",
+    "ruff>=0.16.0,<0.17",
     "pre-commit>=4.6.1,<5",
     "pytest>=9.0.3,<10",
 ]
