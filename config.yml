@@ -9,7 +9,7 @@ input:
 
 splitting:
   value_representation: "absolute" # else percent is possible
-  value: 80
+  value: 1.28
   remove_constants: true
 
 model:

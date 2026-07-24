@@ -12,7 +12,6 @@ from src.markov.gmm import fit_gmms, sample_value
 from src.markov.transition_counts import build_transition_counts
 from src.markov.transitions import build_transition_matrices
 from src.preprocessing.loader import DATA_DIR, load_timeseries
-from src.preprocessing.constant_loads import load_constant_loads
 
 SIM_DAYS = 10
 PER_DAY = 96
