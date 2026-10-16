@@ -2,7 +2,7 @@ input:
   skiprows: 21
   timestamp_col: "Zeitstempel"
   value_col: "Messwert"
-  value_representation: "cumulative_energy"
+  value_representation: "interval_energy"
   interval_minutes: 15
   drop_negative_deltas: true
   pools: false      # true: train one model per subdirectory of data

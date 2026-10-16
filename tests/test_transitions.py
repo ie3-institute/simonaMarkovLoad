@@ -32,7 +32,7 @@ def test_rows_sum_to_one(tiny_models, rng):
     assert np.all(p <= 1)
 
 
-def test_empty_row_self_loop():
+def test_empty_rows():
     n_states = CONFIG["model"]["n_states"]
 
     timestamps = pd.date_range("2024-01-01", periods=10, freq="15min")
@@ -45,15 +45,38 @@ def test_empty_row_self_loop():
 
     assert np.allclose(p[populated_bucket, 0, 0], 1.0, atol=1e-6)
 
+    # states without data move to state 0, the only state reached in this bucket
     for state in range(1, n_states):
-        assert np.allclose(p[populated_bucket, state, state], 1.0, atol=1e-6)
+        assert np.allclose(p[populated_bucket, state, 0], 1.0, atol=1e-6)
 
-    empty_buckets = [b for b in range(NUM_BUCKETS) if b != populated_bucket][:10]
+    # buckets without any data keep a self-loop
+    empty_buckets = [b for b in range(NUM_BUCKETS) if b not in set(df["bucket"])][:10]
     for bucket in empty_buckets:
         for state in range(n_states):
             expected_row = np.zeros(n_states)
             expected_row[state] = 1.0
             assert np.allclose(p[bucket, state, :], expected_row, atol=1e-6)
+
+
+def test_empty_row_uses_states_reached_in_bucket():
+    from src.markov.buckets import bucket_id
+
+    ts = pd.to_datetime(["2025-02-03 00:00", "2025-02-03 00:15"] * 2)
+    df = pd.DataFrame(
+        {
+            "timestamp": ts,
+            "state": [2, 3, 2, 5],
+            "bucket": [bucket_id(t) for t in ts],
+            "source": ["A", "A", "B", "B"],
+        }
+    )
+
+    probs = build_transition_matrices(df)
+    bucket = bucket_id(ts[0])
+
+    # state 0 has no data in this bucket, the bucket reaches states 3 and 5 once each
+    assert np.allclose(probs[bucket, 0, 3], 0.5, atol=1e-6)
+    assert np.allclose(probs[bucket, 0, 5], 0.5, atol=1e-6)
 
 
 def test_transition_counts_structure():

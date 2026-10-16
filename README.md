@@ -18,7 +18,7 @@ The trained model is exported in the **PSDM JSON format** (`simonaMarkovLoad:psd
 - **Global min/max normalisation** across all input files (`minmax_global`); the kW scale is exported with the model so consumers can de-normalise
 - Discretisation of continuous power values into **10 states** using quadratic thresholds
 - **2,304 temporal buckets** based on month, weekday/weekend flag, and quarter-hour slot
-- **Markov transition matrices** per bucket with a **self-loop fallback** for empty rows (handles sparse data gracefully)
+- **Markov transition matrices** per bucket, states without data move to the states reached in the bucket
 - **GMM fitting** per (bucket, state) pair with automatic component selection via BIC (1-3 components)
 - Parallel training with `joblib`
 - Export of the complete model as a **PSDM JSON** file
@@ -38,7 +38,7 @@ simonaMarkovLoad/
 │   │   ├── buckets.py          # Temporal bucket assignment (2,304 buckets)
 │   │   ├── gmm.py              # GMM fitting and sampling
 │   │   ├── transition_counts.py # Raw transition count matrices
-│   │   └── transitions.py      # Probability matrices with self-loop fallback
+│   │   └── transitions.py      # Probability matrices
 │   └── preprocessing/
 │       ├── loader.py           # CSV ingestion and power computation
 │       └── scaling.py          # Normalisation and discretisation
@@ -209,7 +209,7 @@ The model is written to `out/psdm_model.json` by default.
     "discretization": { "states": 10, "thresholds_right": [ ... ] }
   },
   "parameters": {
-    "transitions": { "empty_row_strategy": "self_loop" },
+    "transitions": { "empty_row_strategy": "bucket_distribution" },
     "gmm": { ... }
   },
   "data": {
@@ -240,7 +240,7 @@ This allows transition probabilities and load distributions to vary by time of d
 
 ### Markov chain
 
-For each bucket a 10×10 transition matrix is estimated from historical data. Rows with no observed transitions default to a **self-loop** (stay in the current state), ensuring valid probability distributions in all cases.
+For each bucket a 10×10 transition matrix is estimated from historical data. Only consecutive time steps count as transitions, so gaps in the data are skipped. Rows with no observed transitions use the distribution of the states reached in the bucket, so that states without data can't trap the chain. Buckets without any data keep a self-loop.
 
 ### GMM sampling
 

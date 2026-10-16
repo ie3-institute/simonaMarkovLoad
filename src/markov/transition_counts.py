@@ -6,6 +6,7 @@ from src.config import CONFIG
 from .buckets import NUM_BUCKETS
 
 N_STATES = int(CONFIG["model"]["n_states"])
+INTERVAL = np.timedelta64(int(CONFIG["input"].get("interval_minutes", 15)), "m")
 
 
 def build_transition_counts(
@@ -23,12 +24,14 @@ def build_transition_counts(
     s_tp1 = df[state_col].to_numpy(dtype=int)[1:]
     buckets = df[bucket_col].to_numpy(dtype=int)[:-1]
 
+    # only consecutive time steps are transitions, gaps in the data are skipped
+    valid = df["timestamp"].diff().to_numpy()[1:] == INTERVAL
     if source_col in df.columns:
         sources = df[source_col].to_numpy()
-        valid = sources[:-1] == sources[1:]
-        s_t = s_t[valid]
-        s_tp1 = s_tp1[valid]
-        buckets = buckets[valid]
+        valid &= sources[:-1] == sources[1:]
+    s_t = s_t[valid]
+    s_tp1 = s_tp1[valid]
+    buckets = buckets[valid]
 
     counts = np.zeros((NUM_BUCKETS, N_STATES, N_STATES), dtype=dtype)
     np.add.at(counts, (buckets, s_t, s_tp1), 1)
