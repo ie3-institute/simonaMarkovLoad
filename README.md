@@ -40,6 +40,7 @@ simonaMarkovLoad/
 │   │   ├── transition_counts.py # Raw transition count matrices
 │   │   └── transitions.py      # Probability matrices
 │   └── preprocessing/
+│       ├── constant_loads.py   # Reads constant_loads.yml
 │       ├── loader.py           # CSV ingestion and power computation
 │       └── scaling.py          # Normalisation and discretisation
 ├── tests/                      # pytest test suite
@@ -48,6 +49,7 @@ simonaMarkovLoad/
 ├── data/                       # Input CSV files or pool subdirectories
 ├── out/                        # Model output (psdm_model.json)
 ├── config.yml                  # Configuration
+├── constant_loads.yml          # Optional constant loads per CSV file
 └── pyproject.toml
 ```
 
@@ -99,6 +101,11 @@ subdirectory). The CSV format is expected to have:
 | `Messwert` | Energy in kWh or power in kW (configurable) |
 
 The first 21 rows are skipped by default (configurable via `config.yml`).
+
+Timestamps are expected in local time (Europe/Berlin), since the buckets are
+derived from them directly. Gaps in the data are skipped when counting
+transitions. If a missing interval means a load of 0, the zeros have to be
+added to the input data.
 
 ### 2. Configure
 
@@ -175,9 +182,7 @@ uv run python -m src.main
 
 This will:
 
-Negative cumulative meter deltas are dropped by default before normalisation.
-
-1. Load and preprocess raw CSV data (input values → kW, global min/max normalisation, discretisation)
+1. Load and preprocess raw CSV data (input values → kW, dropping negative cumulative meter deltas, global min/max normalisation, discretisation)
 2. Assign temporal buckets to each observation
 3. Build Markov transition matrices (2,304 × 10 × 10)
 4. Fit GMMs for each (bucket, state) pair in parallel
@@ -192,7 +197,7 @@ The model is written to `out/psdm_model.json` by default.
 {
   "schema": "simonaMarkovLoad:psdm:1.0",
   "generated_at": "...",
-  "generator": { "name": "simonaMarkovLoad", "config": { ... } },
+  "generator": { "name": "simonaMarkovLoad", "version": "...", "config": { ... } },
   "time_model": {
     "bucket_count": 2304,
     "bucket_encoding": { "formula": "bucket = month*192 + is_weekend*96 + quarter_hour" },
@@ -213,7 +218,7 @@ The model is written to `out/psdm_model.json` by default.
     "gmm": { ... }
   },
   "data": {
-    "transitions": { "shape": [2304, 10, 10], "dtype": "float32", "values": [ ... ] },
+    "transitions": { "shape": [2304, 10, 10], "dtype": "float32", "encoding": "nested_lists", "values": [ ... ] },
     "gmms": { "buckets": [ { "states": [ { "weights": [...], "means": [...], "variances": [...] }, ... ] }, ... ] }
   },
   "training_data": { "records": ..., "time_range": { ... } }
@@ -276,12 +281,15 @@ Pre-commit hooks enforce:
 | joblib | Parallel GMM fitting |
 | matplotlib | Visualisation |
 | tqdm | Progress bars |
+| pyyaml | Configuration files |
 
 Version constraints are maintained in `pyproject.toml` (locked in `uv.lock`).
 
 ---
 
 ## 📄 License
+
+This project is licensed under the BSD 3-Clause License, see [LICENSE](LICENSE).
 
 ---
 

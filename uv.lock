@@ -797,6 +797,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pyyaml" },
     { name = "scikit-learn" },
     { name = "tqdm" },
 ]
@@ -816,6 +817,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.11.1,<4.0.0" },
     { name = "numpy", specifier = ">=2.5.2,<3.0.0" },
     { name = "pandas", specifier = ">=3.0.5,<4.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.2,<7.0.0" },
     { name = "scikit-learn", specifier = ">=1.9.0,<2.0.0" },
     { name = "tqdm", specifier = ">=4.70.0,<5.0.0" },
 ]
