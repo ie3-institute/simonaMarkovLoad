@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Transition counts are now computed per source file and aggregated, preventing spurious cross-household transitions [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
 - `skiprows` is now read from config instead of being hardcoded [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
+- Transitions are only counted between consecutive time steps, gaps in the data are skipped [#172](https://github.com/ie3-institute/simonaMarkovLoad/issues/172)
+- Empty transition rows use the states reached in the bucket instead of a self-loop, so that states without data can't trap the chain [#172](https://github.com/ie3-institute/simonaMarkovLoad/issues/172)
 - Removed duplicate `_core.py`; `build_transition_matrices` accepts pre-computed counts to avoid redundant computation [#83](https://github.com/ie3-institute/simonaMarkovLoad/issues/83)
 - Tracked sample file `dummy.csv` is no longer silently included in the training data [#127](https://github.com/ie3-institute/simonaMarkovLoad/issues/127)
 

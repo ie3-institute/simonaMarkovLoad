@@ -21,6 +21,24 @@ def test_build_transition_counts_basic():
     assert counts.sum() == 2
 
 
+def test_transitions_across_gaps_excluded():
+    ts = pd.to_datetime(
+        ["2025-01-06 00:00", "2025-01-06 00:15", "2025-01-06 01:00", "2025-01-06 01:15"]
+    )
+    states = [0, 1, 2, 3]
+    buckets = [bucket_id(t) for t in ts]
+
+    df = pd.DataFrame({"timestamp": ts, "state": states, "bucket": buckets})
+
+    counts = build_transition_counts(df)
+
+    # 00:15 -> 01:00 is not a 15 min step, so 1 -> 2 must not be counted
+    assert counts[buckets[0], 0, 1] == 1
+    assert counts[buckets[1], 1, 2] == 0
+    assert counts[buckets[2], 2, 3] == 1
+    assert counts.sum() == 2
+
+
 def test_cross_source_transitions_excluded():
     """Transitions between the last row of one source and the first of the next must not be counted."""
     ts = pd.to_datetime(

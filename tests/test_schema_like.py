@@ -126,7 +126,10 @@ def test_schema_value_constraints(small_df, tiny_models):
     assert payload["value_model"]["value_unit"] == "normalized"
     assert payload["value_model"]["normalization"]["method"] == "minmax_global"
 
-    assert payload["parameters"]["transitions"]["empty_row_strategy"] == "self_loop"
+    assert (
+        payload["parameters"]["transitions"]["empty_row_strategy"]
+        == "bucket_distribution"
+    )
 
     assert payload["data"]["transitions"]["dtype"] == "float32"
     assert payload["data"]["transitions"]["encoding"] == "nested_lists"

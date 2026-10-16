@@ -121,7 +121,7 @@ def build_psdm_payload_from_models(
             "discretization": {"states": n_states, "thresholds_right": thresholds},
         },
         "parameters": {
-            "transitions": {"empty_row_strategy": "self_loop"},
+            "transitions": {"empty_row_strategy": "bucket_distribution"},
             "gmm": gmm_params,
         },
         "data": {

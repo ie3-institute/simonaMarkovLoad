@@ -12,14 +12,16 @@ def build_transition_matrices(
 ) -> np.ndarray:
     if counts is None:
         counts = build_transition_counts(df, dtype=np.uint32)
-    counts = counts.copy()
-    row_sum = counts.sum(axis=2, keepdims=True)
-    empty = row_sum == 0
+    counts = counts.astype(np.float64)
+    empty = counts.sum(axis=2) == 0
     if np.any(empty):
-        idx_b, idx_i, _ = np.where(empty)
-        counts[idx_b, idx_i, :] = 0
-        counts[idx_b, idx_i, idx_i] = 1
-    row_sum[empty] = 1
-    probs = counts / row_sum
+        # states without data in a bucket move to the states reached in this bucket,
+        # so that they can't trap the chain; buckets without any data keep a self-loop
+        reached = counts.sum(axis=1)
+        idx_b, idx_i = np.where(empty)
+        counts[idx_b, idx_i, :] = reached[idx_b]
+        no_data = reached[idx_b].sum(axis=1) == 0
+        counts[idx_b[no_data], idx_i[no_data], idx_i[no_data]] = 1
+    probs = counts / counts.sum(axis=2, keepdims=True)
 
     return probs.astype(dtype)

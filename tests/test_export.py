@@ -57,7 +57,7 @@ def test_export_payload_from_models(small_df, tiny_models):
     assert discretization["thresholds_right"] == expected_thresholds
 
     parameters = payload["parameters"]
-    assert parameters["transitions"]["empty_row_strategy"] == "self_loop"
+    assert parameters["transitions"]["empty_row_strategy"] == "bucket_distribution"
     assert "gmm" in parameters
 
     data = payload["data"]
